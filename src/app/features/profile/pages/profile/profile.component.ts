@@ -1,5 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  ValidatorFn,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -82,6 +90,59 @@ import { ErrorMessageComponent } from '../../../../shared/components/error-messa
                 }
               </div>
             </form>
+
+            <div class="password-section">
+              <h3>Security</h3>
+              @if (!isChangingPassword()) {
+                <button mat-stroked-button (click)="enableChangePassword()">Change Password</button>
+              } @else if (passwordForm) {
+                <form [formGroup]="passwordForm" (ngSubmit)="onSavePassword()">
+                  <mat-form-field>
+                    <mat-label>Current Password</mat-label>
+                    <input matInput type="password" formControlName="currentPassword" />
+                    @if (passwordForm.get('currentPassword')?.hasError('required')) {
+                      <mat-error>Current password is required</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <mat-form-field>
+                    <mat-label>New Password</mat-label>
+                    <input matInput type="password" formControlName="newPassword" />
+                    @if (passwordForm.get('newPassword')?.hasError('required')) {
+                      <mat-error>New password is required</mat-error>
+                    }
+                    @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+                      <mat-error>Password must be at least 8 characters</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <mat-form-field>
+                    <mat-label>Confirm New Password</mat-label>
+                    <input matInput type="password" formControlName="confirmNewPassword" />
+                    @if (passwordForm.get('confirmNewPassword')?.hasError('required')) {
+                      <mat-error>Confirm password is required</mat-error>
+                    }
+                    @if (passwordForm.get('confirmNewPassword')?.hasError('passwordMismatch')) {
+                      <mat-error>Passwords do not match</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <div class="actions">
+                    <button
+                      mat-raised-button
+                      color="primary"
+                      type="submit"
+                      [disabled]="passwordForm.invalid || isSavingPassword()"
+                    >
+                      Update Password
+                    </button>
+                    <button mat-button type="button" (click)="cancelChangePassword()">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              }
+            </div>
           }
         </mat-card-content>
       </mat-card>
@@ -100,6 +161,16 @@ import { ErrorMessageComponent } from '../../../../shared/components/error-messa
       }
       mat-card-content {
         padding-top: 1rem;
+      }
+      .password-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+      }
+      h3 {
+        margin-bottom: 1rem;
+        color: rgba(0, 0, 0, 0.87);
+        font-weight: 500;
       }
       form {
         display: flex;
@@ -121,8 +192,11 @@ export class ProfileComponent implements OnInit {
   private readonly errorService = inject(ErrorService);
 
   profileForm?: FormGroup;
+  passwordForm?: FormGroup;
   isEditing = signal(false);
   isSaving = signal(false);
+  isChangingPassword = signal(false);
+  isSavingPassword = signal(false);
   errorMessage = signal<string | undefined>(undefined);
   originalUser?: User;
 
@@ -131,14 +205,13 @@ export class ProfileComponent implements OnInit {
   }
 
   loadProfile(): void {
-    const userId = this.userState.getStoredUserId();
-    if (!userId) {
-      this.errorMessage.set('No user ID found. Please register first.');
+    if (!this.userState.isAuthenticated()) {
+      this.errorMessage.set('Not authenticated. Please log in.');
       return;
     }
 
     this.errorMessage.set(undefined);
-    this.userState.loadUser(userId).subscribe({
+    this.userState.loadCurrentUser().subscribe({
       next: (user) => {
         this.originalUser = user;
         this.initializeForm(user);
@@ -170,13 +243,12 @@ export class ProfileComponent implements OnInit {
 
   onSave(): void {
     if (this.profileForm?.valid) {
-      const userId = this.userState.getStoredUserId();
-      if (!userId) return;
+      if (!this.originalUser?.id) return;
 
       this.isSaving.set(true);
       const updates = this.profileForm.value;
 
-      this.userState.updateUser(userId, updates).subscribe({
+      this.userState.updateUser(this.originalUser.id, updates).subscribe({
         next: () => {
           this.errorService.showSuccess('Profile updated successfully!');
           this.isEditing.set(false);
@@ -188,4 +260,63 @@ export class ProfileComponent implements OnInit {
       });
     }
   }
+
+  // Password Management
+  enableChangePassword(): void {
+    this.passwordForm = this.fb.group(
+      {
+        currentPassword: ['', Validators.required],
+        newPassword: ['', [Validators.required, Validators.minLength(8)]],
+        confirmNewPassword: ['', Validators.required],
+      },
+      { validators: this.passwordMatchValidator },
+    );
+    this.isChangingPassword.set(true);
+  }
+
+  cancelChangePassword(): void {
+    this.isChangingPassword.set(false);
+    this.passwordForm = undefined;
+  }
+
+  onSavePassword(): void {
+    if (this.passwordForm?.valid) {
+      this.isSavingPassword.set(true);
+      const { currentPassword, newPassword } = this.passwordForm.value;
+
+      this.userState
+        .updatePassword({
+          current_password: currentPassword,
+          new_password: newPassword,
+        })
+        .subscribe({
+          next: () => {
+            this.errorService.showSuccess('Password updated successfully!');
+            this.isChangingPassword.set(false);
+            this.passwordForm = undefined;
+            this.isSavingPassword.set(false);
+          },
+          error: () => {
+            this.isSavingPassword.set(false);
+          },
+        });
+    }
+  }
+
+  private passwordMatchValidator: ValidatorFn = (
+    control: AbstractControl,
+  ): ValidationErrors | null => {
+    const password = control.get('newPassword');
+    const confirmPassword = control.get('confirmNewPassword');
+
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    } else {
+      if (confirmPassword?.hasError('passwordMismatch')) {
+        confirmPassword.setErrors(null);
+      }
+    }
+    return null;
+  };
 }

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RegisterComponent } from './register.component';
 import { UserService } from '../../../../core/services/user.service';
-import { ApiService } from '../../../../services/api.service';
 import { ErrorService } from '../../../../core/services/error.service';
 import { Router, provideRouter } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,17 +10,14 @@ import { User } from '../../../../core/models';
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
   let fixture: ComponentFixture<RegisterComponent>;
-  let userServiceSpy: { setUser: ReturnType<typeof vi.fn> };
-  let apiServiceSpy: { post: ReturnType<typeof vi.fn> };
+  let userServiceSpy: { setUser: ReturnType<typeof vi.fn>; register: ReturnType<typeof vi.fn> };
   let errorServiceSpy: { showSuccess: ReturnType<typeof vi.fn> };
   let router: Router;
 
   beforeEach(async () => {
     userServiceSpy = {
       setUser: vi.fn(),
-    };
-    apiServiceSpy = {
-      post: vi.fn(),
+      register: vi.fn(),
     };
     errorServiceSpy = {
       showSuccess: vi.fn(),
@@ -31,9 +27,12 @@ describe('RegisterComponent', () => {
       imports: [RegisterComponent, BrowserAnimationsModule],
       providers: [
         { provide: UserService, useValue: userServiceSpy },
-        { provide: ApiService, useValue: apiServiceSpy },
         { provide: ErrorService, useValue: errorServiceSpy },
         provideRouter([]),
+        // ApiService is not needed strictly if the component doesn't inject it directly anymore,
+        // but if it's a dependency of UserService (even though we mock UserService), we might leave it or remove it.
+        // Since we mock UserService, we don't need ApiService in providers unless the component uses it.
+        // The component was refactored to remove ApiService.
       ],
     }).compileComponents();
 
@@ -77,7 +76,7 @@ describe('RegisterComponent', () => {
     expect(component.registerForm.hasError('passwordMismatch')).toBeFalsy();
   });
 
-  it('should call api on submit', () => {
+  it('should call register on submit', () => {
     const userData = {
       name: 'Test',
       email: 'test@example.com',
@@ -86,18 +85,22 @@ describe('RegisterComponent', () => {
       phone: '',
     };
     component.registerForm.setValue(userData);
-    const mockUser = { id: '1', name: 'Test', email: 'test@example.com' } as User;
-    apiServiceSpy.post.mockReturnValue(of(mockUser));
+    const mockResponse = {
+      user: { id: '1', name: 'Test', email: 'test@example.com' } as User,
+      token: 'token',
+    };
+    userServiceSpy.register.mockReturnValue(of(mockResponse));
 
     component.onSubmit();
 
-    expect(apiServiceSpy.post).toHaveBeenCalledWith('/users', {
+    expect(userServiceSpy.register).toHaveBeenCalledWith({
       name: userData.name,
       email: userData.email,
       password: userData.password,
       phone: undefined,
     });
-    expect(userServiceSpy.setUser).toHaveBeenCalledWith(mockUser);
+    // The component no longer calls setUser, the service does.
+    // expect(userServiceSpy.setUser).toHaveBeenCalledWith(mockUser);
     expect(router.navigate).toHaveBeenCalledWith(['/profile']);
   });
 
@@ -109,7 +112,7 @@ describe('RegisterComponent', () => {
       confirmPassword: 'password123',
       phone: '',
     });
-    apiServiceSpy.post.mockReturnValue(new Observable()); // Never emits
+    userServiceSpy.register.mockReturnValue(new Observable()); // Never emits
 
     component.onSubmit();
 
@@ -124,7 +127,7 @@ describe('RegisterComponent', () => {
       confirmPassword: 'password123',
       phone: '',
     });
-    apiServiceSpy.post.mockReturnValue(throwError(() => new Error('Registration failed')));
+    userServiceSpy.register.mockReturnValue(throwError(() => new Error('Registration failed')));
 
     component.onSubmit();
 

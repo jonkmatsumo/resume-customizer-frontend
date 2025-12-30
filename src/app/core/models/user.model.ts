@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  password_set?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -10,7 +11,7 @@ export interface User {
 export interface CreateUserRequest {
   name: string;
   email: string;
-  password?: string;
+  password: string;
   phone?: string;
 }
 
@@ -27,5 +28,14 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
-  token?: string;
+  token: string;
+}
+
+export interface UpdatePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface UpdatePasswordResponse {
+  message: string;
 }

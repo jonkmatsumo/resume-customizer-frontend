@@ -41,12 +41,12 @@ describe('LandingComponent', () => {
     expect(element.textContent).not.toContain('Go to Profile');
   });
 
-  it('should show Go to Profile button when authenticated', () => {
+  it('should show Go to Dashboard button when authenticated', () => {
     userServiceSpy.isAuthenticated.mockReturnValue(true);
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.textContent).toContain('Go to Profile');
+    expect(element.textContent).toContain('Go to Dashboard');
     expect(element.textContent).not.toContain('Get Started');
     // Note: 'I already have an account' text might be part of the other button which is hidden, let's check
     expect(element.textContent).not.toContain('I already have an account');
@@ -68,11 +68,11 @@ describe('LandingComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
-  it('should navigate to profile', () => {
+  it('should navigate to dashboard', () => {
     userServiceSpy.isAuthenticated.mockReturnValue(true);
     fixture.detectChanges();
 
-    component.navigateToProfile();
-    expect(router.navigate).toHaveBeenCalledWith(['/profile']);
+    component.navigateToDashboard();
+    expect(router.navigate).toHaveBeenCalledWith(['/resumes']);
   });
 });

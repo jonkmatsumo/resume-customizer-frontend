@@ -5,6 +5,8 @@ export type {
   UpdateUserRequest,
   LoginRequest,
   LoginResponse,
+  UpdatePasswordRequest,
+  UpdatePasswordResponse,
 } from './user.model';
 
 // Job models

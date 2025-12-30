@@ -1,5 +1,11 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { User, LoginResponse } from '../models';
+import {
+  User,
+  LoginResponse,
+  CreateUserRequest,
+  UpdatePasswordRequest,
+  UpdatePasswordResponse,
+} from '../models';
 import { ApiService } from '../../services/api.service';
 import { Observable, tap } from 'rxjs';
 
@@ -65,6 +71,29 @@ export class UserService {
   }
 
   /**
+   * Register a new user
+   */
+  register(data: CreateUserRequest): Observable<LoginResponse> {
+    this._isLoading.set(true);
+    return this.api.post<LoginResponse>('/auth/register', data).pipe(
+      tap({
+        next: (response) => {
+          this.setUser(response.user, response.token);
+          this._isLoading.set(false);
+        },
+        error: () => this._isLoading.set(false),
+      }),
+    );
+  }
+
+  /**
+   * Get the current auth token
+   */
+  getAuthToken(): string | null {
+    return this.api.getAuthToken();
+  }
+
+  /**
    * Login with email and password
    */
   login(email: string, password: string): Observable<LoginResponse> {
@@ -105,6 +134,37 @@ export class UserService {
       tap({
         next: (updatedUser) => {
           this._currentUser.set(updatedUser);
+          this._isLoading.set(false);
+        },
+        error: () => this._isLoading.set(false),
+      }),
+    );
+  }
+
+  /**
+   * Update user password
+   */
+  updatePassword(data: UpdatePasswordRequest): Observable<UpdatePasswordResponse> {
+    this._isLoading.set(true);
+    return this.api.put<UpdatePasswordResponse>('/users/me/password', data).pipe(
+      tap({
+        next: () => {
+          this._isLoading.set(false);
+        },
+        error: () => this._isLoading.set(false),
+      }),
+    );
+  }
+
+  /**
+   * Load current user details
+   */
+  loadCurrentUser(): Observable<User> {
+    this._isLoading.set(true);
+    return this.api.get<User>('/users/me').pipe(
+      tap({
+        next: (user) => {
+          this._currentUser.set(user);
           this._isLoading.set(false);
         },
         error: () => this._isLoading.set(false),

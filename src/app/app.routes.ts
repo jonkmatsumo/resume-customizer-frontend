@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { userGuard } from './core/guards/user.guard';
 
 export const routes: Routes = [
   {
@@ -20,6 +21,7 @@ export const routes: Routes = [
     path: 'profile',
     loadComponent: () =>
       import('./features/profile/pages/profile/profile.component').then((m) => m.ProfileComponent),
+    canActivate: [userGuard],
   },
   {
     path: 'experience',
@@ -27,6 +29,7 @@ export const routes: Routes = [
       import('./features/experience/pages/experience-overview/experience-overview.component').then(
         (m) => m.ExperienceOverviewComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: 'experience/edit/:jobId',
@@ -34,6 +37,7 @@ export const routes: Routes = [
       import('./features/experience/pages/job-editor/job-editor.component').then(
         (m) => m.JobEditorComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: 'experience/edit',
@@ -41,6 +45,7 @@ export const routes: Routes = [
       import('./features/experience/pages/job-editor/job-editor.component').then(
         (m) => m.JobEditorComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: 'resumes',
@@ -48,6 +53,7 @@ export const routes: Routes = [
       import('./features/resumes/pages/resume-dashboard/resume-dashboard.component').then(
         (m) => m.ResumeDashboardComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: 'resumes/:runId',
@@ -55,6 +61,7 @@ export const routes: Routes = [
       import('./features/resumes/pages/resume-detail/resume-detail.component').then(
         (m) => m.ResumeDetailComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: 'settings',
@@ -62,6 +69,7 @@ export const routes: Routes = [
       import('./features/settings/pages/settings/settings.component').then(
         (m) => m.SettingsComponent,
       ),
+    canActivate: [userGuard],
   },
   {
     path: '**',

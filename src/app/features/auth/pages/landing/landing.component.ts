@@ -16,8 +16,8 @@ import { UserService } from '../../../../core/services/user.service';
           <p>Create tailored resumes for every job application</p>
           <div class="actions">
             @if (userState.isAuthenticated()) {
-              <button mat-raised-button color="primary" (click)="navigateToProfile()">
-                Go to Profile
+              <button mat-raised-button color="primary" (click)="navigateToDashboard()">
+                Go to Dashboard
               </button>
             } @else {
               <button mat-raised-button color="primary" (click)="navigateToRegister()">
@@ -64,7 +64,7 @@ export class LandingComponent {
     this.router.navigate(['/login']);
   }
 
-  navigateToProfile(): void {
-    this.router.navigate(['/profile']);
+  navigateToDashboard(): void {
+    this.router.navigate(['/resumes']);
   }
 }

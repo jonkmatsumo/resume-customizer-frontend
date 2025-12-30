@@ -6,10 +6,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../../../services/api.service';
 import { UserService } from '../../../../core/services/user.service';
 import { ErrorService } from '../../../../core/services/error.service';
-import { User } from '../../../../core/models';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -162,7 +160,6 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly userState = inject(UserService);
   private readonly errorService = inject(ErrorService);
@@ -210,16 +207,16 @@ export class RegisterComponent {
       this.isLoading.set(true);
       const formValue = this.registerForm.value;
 
-      this.api
-        .post<User>('/users', {
+      this.userState
+        .register({
           name: formValue.name,
           email: formValue.email,
           password: formValue.password,
           phone: formValue.phone || undefined,
         })
         .subscribe({
-          next: (user: User) => {
-            this.userState.setUser(user);
+          next: () => {
+            this.isLoading.set(false);
             this.errorService.showSuccess('Profile created successfully!');
             this.router.navigate(['/profile']);
           },

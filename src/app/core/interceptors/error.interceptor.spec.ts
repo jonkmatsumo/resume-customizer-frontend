@@ -28,6 +28,7 @@ describe('errorInterceptor', () => {
           provide: UserService,
           useValue: {
             logout: vi.fn(),
+            getAuthToken: vi.fn(),
           },
         },
         {

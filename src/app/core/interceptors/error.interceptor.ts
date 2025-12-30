@@ -25,13 +25,28 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         // Server-side error
         switch (error.status) {
           case 400:
-            errorMessage = error.error?.message || 'Bad request';
+            // Check if it's a validation error with field details
+            if (error.error?.errors && Array.isArray(error.error.errors)) {
+              const fieldErrors = error.error.errors
+                .map((e: { field: string; message: string }) => `${e.field}: ${e.message}`)
+                .join(', ');
+              errorMessage = `Validation error: ${fieldErrors}`;
+            } else {
+              errorMessage = error.error?.message || 'Bad request';
+            }
             break;
-          case 401:
-            errorMessage = 'Unauthorized. Please log in.';
+          case 401: {
+            // Check if token exists (might be expired)
+            const token = userService.getAuthToken();
+            if (token) {
+              errorMessage = 'Your session has expired. Please log in again.';
+            } else {
+              errorMessage = 'Unauthorized. Please log in.';
+            }
             userService.logout();
             router.navigate(['/login']);
             break;
+          }
           case 403:
             errorMessage = 'Forbidden. You do not have permission.';
             userService.logout(); // Optional: might just redirect or show error
@@ -43,6 +58,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           case 409:
             errorMessage = error.error?.message || 'Conflict. Resource already exists.';
             break;
+          case 429: {
+            const retryAfter = error.headers?.get('Retry-After');
+            let rateLimitMessage = 'Too many requests. Please try again later.';
+            if (retryAfter) {
+              const minutes = Math.ceil(parseInt(retryAfter, 10) / 60);
+              rateLimitMessage = `Too many requests. Please try again in ${minutes} minute(s).`;
+            }
+            errorMessage = rateLimitMessage;
+            break;
+          }
           case 500:
             errorMessage = 'Server error. Please try again later.';
             break;
