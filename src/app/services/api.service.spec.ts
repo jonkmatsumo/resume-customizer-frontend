@@ -69,6 +69,19 @@ describe('ApiService', () => {
     req.flush(mockData);
   });
 
+  it('should make PATCH request', () => {
+    const mockData = { name: 'Updated' };
+
+    service.patch('/test/1', mockData).subscribe((data) => {
+      expect(data).toEqual(mockData);
+    });
+
+    const req = httpMock.expectOne(`${baseUrl}/test/1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(mockData);
+    req.flush(mockData);
+  });
+
   it('should make DELETE request', () => {
     const mockResponse = { success: true };
 
