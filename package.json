@@ -7,10 +7,13 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --no-watch",
+    "test:watch": "ng test --watch",
+    "test:coverage": "ng test --code-coverage --no-watch",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
-    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
+    "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
     "prepare": "husky"
   },
   "lint-staged": {
