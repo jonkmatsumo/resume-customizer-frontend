@@ -62,7 +62,7 @@ describe('userGuard', () => {
   });
 
   it('should redirect to /register when no user', () => {
-    userService.clearUser();
+    userService.logout();
 
     const result = TestBed.runInInjectionContext(() => userGuard({} as never, {} as never));
 

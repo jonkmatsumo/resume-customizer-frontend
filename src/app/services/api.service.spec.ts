@@ -8,8 +8,24 @@ describe('ApiService', () => {
   let service: ApiService;
   let httpMock: HttpTestingController;
   const baseUrl = `${environment.apiUrl}/${environment.apiVersion}`;
+  let localStorageMock: Record<string, string>;
 
   beforeEach(() => {
+    // Mock localStorage
+    localStorageMock = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => localStorageMock[key] ?? null,
+      setItem: (key: string, value: string) => {
+        localStorageMock[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete localStorageMock[key];
+      },
+      clear: () => {
+        localStorageMock = {};
+      },
+    });
+
     TestBed.configureTestingModule({
       providers: [
         ApiService,
@@ -23,10 +39,38 @@ describe('ApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    localStorage.removeItem('authToken');
+    vi.unstubAllGlobals();
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  describe('Token Management', () => {
+    it('should store token', () => {
+      service.setAuthToken('test-token');
+      expect(localStorage.getItem('authToken')).toBe('test-token');
+      expect(service.getAuthToken()).toBe('test-token');
+    });
+
+    it('should clear token', () => {
+      service.setAuthToken('test-token');
+      service.clearAuthToken();
+      expect(localStorage.getItem('authToken')).toBeNull();
+      expect(service.getAuthToken()).toBeNull();
+    });
+
+    it('should include Authorization header when token exists', () => {
+      service.setAuthToken('test-token');
+      const mockData = { id: '1' };
+
+      service.get('/test').subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/test`);
+      expect(req.request.headers.get('Authorization')).toBe('Bearer test-token');
+      req.flush(mockData);
+    });
   });
 
   it('should make GET request', () => {

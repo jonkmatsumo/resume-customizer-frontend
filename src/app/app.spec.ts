@@ -4,10 +4,31 @@ import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    // Mock localStorage
+    const localStorageMock: Record<string, string> = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => localStorageMock[key] ?? null,
+      setItem: (key: string, value: string) => {
+        localStorageMock[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete localStorageMock[key];
+      },
+      clear: () => {
+        for (const key in localStorageMock) {
+          delete localStorageMock[key];
+        }
+      },
+    });
+
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('should create the app', () => {

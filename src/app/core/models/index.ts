@@ -1,5 +1,11 @@
 // User models
-export type { User, CreateUserRequest, UpdateUserRequest } from './user.model';
+export type {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  LoginRequest,
+  LoginResponse,
+} from './user.model';
 
 // Job models
 export type { Job, CreateJobRequest, UpdateJobRequest } from './job.model';

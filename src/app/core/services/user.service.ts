@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { User } from '../models';
+import { User, LoginResponse } from '../models';
 import { ApiService } from '../../services/api.service';
 import { Observable, tap } from 'rxjs';
 
@@ -24,15 +24,27 @@ export class UserService {
   // Computed flag for whether user is logged in
   readonly isLoggedIn = computed(() => this._currentUser() !== null);
 
+  // Expose auth token helper
+  readonly isAuthenticated = computed(() => !!this.api.getAuthToken());
+
+  constructor() {
+    // Attempt to restore user from storage on init if needed
+    // For now, we rely on the app initializer or route guards to trigger loadUser
+  }
+
   /**
-   * Set the current user
+   * Set the current user and optionally the token
    */
-  setUser(user: User | null): void {
+  setUser(user: User | null, token?: string): void {
     this._currentUser.set(user);
     if (user) {
       localStorage.setItem('userId', user.id);
     } else {
       localStorage.removeItem('userId');
+    }
+
+    if (token) {
+      this.api.setAuthToken(token);
     }
   }
 
@@ -44,11 +56,28 @@ export class UserService {
   }
 
   /**
-   * Clear the current user
+   * Clear the current user and token
    */
-  clearUser(): void {
+  logout(): void {
     this._currentUser.set(null);
     localStorage.removeItem('userId');
+    this.api.clearAuthToken();
+  }
+
+  /**
+   * Login with email and password
+   */
+  login(email: string, password: string): Observable<LoginResponse> {
+    this._isLoading.set(true);
+    return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
+      tap({
+        next: (response) => {
+          this.setUser(response.user, response.token);
+          this._isLoading.set(false);
+        },
+        error: () => this._isLoading.set(false),
+      }),
+    );
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -9,11 +9,33 @@ import { environment } from '../../environments/environment';
 export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/${environment.apiVersion}`;
+  private readonly authToken = signal<string | null>(localStorage.getItem('authToken'));
 
   private getHeaders(): HttpHeaders {
-    return new HttpHeaders({
+    let headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
+
+    const token = this.authToken();
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return headers;
+  }
+
+  setAuthToken(token: string): void {
+    localStorage.setItem('authToken', token);
+    this.authToken.set(token);
+  }
+
+  clearAuthToken(): void {
+    localStorage.removeItem('authToken');
+    this.authToken.set(null);
+  }
+
+  getAuthToken(): string | null {
+    return this.authToken();
   }
 
   get<T>(endpoint: string): Observable<T> {

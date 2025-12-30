@@ -10,6 +10,10 @@ describe('UserService', () => {
   let apiServiceSpy: {
     get: ReturnType<typeof vi.fn>;
     put: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
+    setAuthToken: ReturnType<typeof vi.fn>;
+    clearAuthToken: ReturnType<typeof vi.fn>;
+    getAuthToken: ReturnType<typeof vi.fn>;
   };
 
   const mockUser: User = {
@@ -40,6 +44,10 @@ describe('UserService', () => {
     apiServiceSpy = {
       get: vi.fn(),
       put: vi.fn(),
+      post: vi.fn(),
+      setAuthToken: vi.fn(),
+      clearAuthToken: vi.fn(),
+      getAuthToken: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -68,6 +76,18 @@ describe('UserService', () => {
     expect(service.isLoading()).toBe(false);
   });
 
+  describe('isAuthenticated', () => {
+    it('should return false when no token', () => {
+      apiServiceSpy.getAuthToken.mockReturnValue(null);
+      expect(service.isAuthenticated()).toBe(false);
+    });
+
+    it('should return true when token exists', () => {
+      apiServiceSpy.getAuthToken.mockReturnValue('valid-token');
+      expect(service.isAuthenticated()).toBe(true);
+    });
+  });
+
   describe('setUser', () => {
     it('should set the current user', () => {
       service.setUser(mockUser);
@@ -82,6 +102,11 @@ describe('UserService', () => {
     it('should store userId in localStorage', () => {
       service.setUser(mockUser);
       expect(localStorage.getItem('userId')).toBe('user-123');
+    });
+
+    it('should set auth token if provided', () => {
+      service.setUser(mockUser, 'new-token');
+      expect(apiServiceSpy.setAuthToken).toHaveBeenCalledWith('new-token');
     });
 
     it('should remove userId from localStorage when set to null', () => {
@@ -102,23 +127,28 @@ describe('UserService', () => {
     });
   });
 
-  describe('clearUser', () => {
+  describe('logout', () => {
     it('should clear current user', () => {
       service.setUser(mockUser);
-      service.clearUser();
+      service.logout();
       expect(service.currentUser()).toBeNull();
     });
 
     it('should set isLoggedIn to false', () => {
       service.setUser(mockUser);
-      service.clearUser();
+      service.logout();
       expect(service.isLoggedIn()).toBe(false);
     });
 
     it('should remove userId from localStorage', () => {
       service.setUser(mockUser);
-      service.clearUser();
+      service.logout();
       expect(localStorage.getItem('userId')).toBeNull();
+    });
+
+    it('should clear auth token', () => {
+      service.logout();
+      expect(apiServiceSpy.clearAuthToken).toHaveBeenCalled();
     });
   });
 
@@ -180,6 +210,36 @@ describe('UserService', () => {
       });
 
       expect(service.isLoading()).toBe(false);
+    });
+  });
+
+  describe('login', () => {
+    it('should login and set user and token', () => {
+      const loginResponse = { user: mockUser, token: 'test-token' };
+      apiServiceSpy.post.mockReturnValue(of(loginResponse));
+
+      service.login('test@example.com', 'password').subscribe();
+
+      expect(apiServiceSpy.post).toHaveBeenCalledWith('/auth/login', {
+        email: 'test@example.com',
+        password: 'password',
+      });
+      expect(service.currentUser()).toEqual(mockUser);
+      expect(apiServiceSpy.setAuthToken).toHaveBeenCalledWith('test-token');
+      expect(service.isLoading()).toBe(false);
+    });
+
+    it('should handle login error', () => {
+      apiServiceSpy.post.mockReturnValue(throwError(() => new Error('Login failed')));
+
+      service.login('test@example.com', 'badpass').subscribe({
+        error: () => {
+          /* intentional empty */
+        },
+      });
+
+      expect(service.isLoading()).toBe(false);
+      expect(service.currentUser()).toBeNull();
     });
   });
 });

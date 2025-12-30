@@ -175,7 +175,7 @@ export class SettingsComponent {
       )
     ) {
       // Clear local storage / user session
-      this.userState.clearUser();
+      this.userState.logout();
 
       // Navigate to landing
       this.router.navigate(['/']);
