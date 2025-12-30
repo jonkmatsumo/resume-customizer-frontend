@@ -69,6 +69,12 @@ describe('RunsService', () => {
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('company=Google'));
     });
 
+    it('should load runs with empty filters object', () => {
+      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      service.loadRuns({}).subscribe();
+      expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.not.stringContaining('?'));
+    });
+
     it('should load runs with status filter only', () => {
       apiServiceSpy.get.mockReturnValue(of(mockRuns));
       service.loadRuns({ status: 'failed' }).subscribe();
