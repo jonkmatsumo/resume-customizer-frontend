@@ -34,7 +34,7 @@ import { UserService } from '../../core/services/user.service';
         </span>
       }
       @if (!userState.isLoggedIn()) {
-        <a mat-button routerLink="/auth/register">Register</a>
+        <a mat-button routerLink="/register">Register</a>
       }
     </mat-toolbar>
   `,

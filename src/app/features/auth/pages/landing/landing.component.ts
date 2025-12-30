@@ -60,7 +60,7 @@ export class LandingComponent implements OnInit {
   }
 
   navigateToRegister(): void {
-    this.router.navigate(['/auth/register']);
+    this.router.navigate(['/register']);
   }
 
   navigateToProfile(): void {
