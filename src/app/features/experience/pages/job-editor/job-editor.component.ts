@@ -123,7 +123,7 @@ interface ExperienceFormData {
                         type="button"
                         (click)="removeExperience(i)"
                         [disabled]="experiencesArray.length === 1"
-                        aria-label="Delete bullet"
+                        [attr.aria-label]="'Delete bullet ' + (i + 1)"
                       >
                         <mat-icon>delete</mat-icon>
                       </button>

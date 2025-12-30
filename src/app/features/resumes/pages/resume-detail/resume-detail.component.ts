@@ -12,6 +12,7 @@ import { RunsService } from '../../../../core/services/runs.service';
 import { ApiService } from '../../../../services/api.service';
 import { Run, Artifact } from '../../../../core/models';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 @Component({
   selector: 'app-resume-detail',
@@ -24,6 +25,7 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
     MatExpansionModule,
     MatIconModule,
     LoadingSpinnerComponent,
+    SkeletonLoaderComponent,
   ],
   template: `
     <div class="detail-container">
@@ -76,7 +78,13 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
           </mat-card-content>
         </mat-card>
       } @else {
-        <app-loading-spinner></app-loading-spinner>
+        <div class="skeleton-container">
+          <app-skeleton-loader type="title" width="60%"></app-skeleton-loader>
+          <app-skeleton-loader type="text" width="40%"></app-skeleton-loader>
+          <div style="margin-top: 2rem">
+            <app-skeleton-loader type="card" height="300px"></app-skeleton-loader>
+          </div>
+        </div>
       }
     </div>
   `,

@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 
 import { JobsService } from '../../../../core/services/jobs.service';
 import { UserService } from '../../../../core/services/user.service';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
@@ -26,9 +26,9 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
-    LoadingSpinnerComponent,
     ErrorMessageComponent,
     EmptyStateComponent,
+    SkeletonLoaderComponent,
   ],
   template: `
     <div class="experience-container">
@@ -44,7 +44,13 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
       </header>
 
       @if (jobsService.isLoading()) {
-        <app-loading-spinner message="Loading jobs..."></app-loading-spinner>
+        <div class="jobs-grid">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="skeleton-card">
+              <app-skeleton-loader type="card" height="150px"></app-skeleton-loader>
+            </div>
+          }
+        </div>
       }
 
       @if (errorMessage()) {
@@ -93,10 +99,22 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                     </p>
                   </mat-card-content>
                   <mat-card-actions align="end">
-                    <button mat-button color="primary" [routerLink]="['/experience/edit', job.id]">
+                    <button
+                      mat-button
+                      color="primary"
+                      [routerLink]="['/experience/edit', job.id]"
+                      [aria-label]="'Edit ' + job.role_title + ' at ' + job.company"
+                    >
                       Edit
                     </button>
-                    <button mat-button color="warn" (click)="deleteJob(job.id)">Delete</button>
+                    <button
+                      mat-button
+                      color="warn"
+                      (click)="deleteJob(job.id)"
+                      [aria-label]="'Delete ' + job.role_title + ' at ' + job.company"
+                    >
+                      Delete
+                    </button>
                   </mat-card-actions>
                 </mat-card>
               }

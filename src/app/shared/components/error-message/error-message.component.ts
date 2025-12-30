@@ -1,18 +1,31 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-error-message',
   standalone: true,
-  imports: [MatCardModule, MatButtonModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
   template: `
     @if (message) {
       <mat-card class="error-card">
         <mat-card-content>
-          <p>{{ message }}</p>
+          <div class="error-icon">
+            <mat-icon color="warn">error_outline</mat-icon>
+          </div>
+          <div class="error-text">
+            <p class="message">{{ message }}</p>
+            @if (details) {
+              <p class="details">{{ details }}</p>
+            }
+          </div>
           @if (showRetry) {
-            <button mat-raised-button color="primary" (click)="retry.emit()">Retry</button>
+            <button mat-stroked-button color="warn" (click)="retry.emit()">
+              <mat-icon>refresh</mat-icon>
+              Retry
+            </button>
           }
         </mat-card-content>
       </mat-card>
@@ -21,25 +34,40 @@ import { MatButtonModule } from '@angular/material/button';
   styles: [
     `
       .error-card {
-        margin: 1rem;
+        margin: 1rem 0;
         background-color: #ffebee;
-        color: #c62828;
+        border-left: 4px solid #f44336;
+        color: #b71c1c;
       }
       mat-card-content {
         display: flex;
-        flex-direction: column;
         align-items: center;
         gap: 1rem;
+        padding: 1rem !important;
       }
-      p {
+      .error-icon {
+        display: flex;
+        align-items: center;
+      }
+      .error-text {
+        flex: 1;
+      }
+      .message {
         margin: 0;
-        text-align: center;
+        font-weight: 500;
+        font-size: 1rem;
+      }
+      .details {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.85rem;
+        opacity: 0.8;
       }
     `,
   ],
 })
 export class ErrorMessageComponent {
   @Input() message?: string;
+  @Input() details?: string;
   @Input() showRetry = false;
   @Output() retry = new EventEmitter<void>();
 }
