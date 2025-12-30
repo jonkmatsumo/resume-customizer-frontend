@@ -1,0 +1,35 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for production
+        run: npm run build -- --configuration production
+
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment"
+          echo "Build output: dist/resume-customizer-frontend/browser"
+          # Add deployment commands here (e.g., rsync, scp, cloud CLI)
+          # Example: aws s3 sync dist/resume-customizer-frontend/browser s3://prod-bucket
