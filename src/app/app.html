@@ -1,27 +1,6 @@
 <div class="app-container">
-  <header>
-    <nav>
-      <ul>
-        <li>
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
-            >Home</a
-          >
-        </li>
-        <li><a routerLink="/register" routerLinkActive="active">Register</a></li>
-        <li><a routerLink="/profile" routerLinkActive="active">Profile</a></li>
-        <li><a routerLink="/experience" routerLinkActive="active">Experience</a></li>
-        <li><a routerLink="/experience/edit" routerLinkActive="active">Add Job</a></li>
-        <li><a routerLink="/resumes" routerLinkActive="active">Resumes</a></li>
-        <li><a routerLink="/settings" routerLinkActive="active">Settings</a></li>
-      </ul>
-    </nav>
-  </header>
-
+  <app-header></app-header>
   <main>
     <router-outlet></router-outlet>
   </main>
-
-  <footer>
-    <p>Resume Customizer Frontend - Dev Build</p>
-  </footer>
 </div>
