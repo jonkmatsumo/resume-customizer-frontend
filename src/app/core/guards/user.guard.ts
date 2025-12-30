@@ -3,17 +3,17 @@ import { CanActivateFn, Router } from '@angular/router';
 import { UserService } from '../services/user.service';
 
 /**
- * Route guard that checks if a user is registered.
- * Redirects to the register page if no user is set.
+ * Route guard that checks if a user is authenticated.
+ * Redirects to the login page if not authenticated.
  */
 export const userGuard: CanActivateFn = () => {
   const userService = inject(UserService);
   const router = inject(Router);
 
-  if (userService.currentUser()) {
+  if (userService.isAuthenticated()) {
     return true;
   }
 
-  // Redirect to register page if no user
-  return router.createUrlTree(['/register']);
+  // Redirect to login page if no user
+  return router.createUrlTree(['/login']);
 };

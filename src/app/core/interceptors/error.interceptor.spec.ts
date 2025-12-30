@@ -2,12 +2,16 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { UserService } from '../services/user.service';
 import { errorInterceptor } from './error.interceptor';
 
 describe('errorInterceptor', () => {
   let httpMock: HttpTestingController;
   let httpClient: HttpClient;
   let snackBar: MatSnackBar;
+  let userService: UserService;
+  let router: Router;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -20,12 +24,26 @@ describe('errorInterceptor', () => {
             open: vi.fn(),
           },
         },
+        {
+          provide: UserService,
+          useValue: {
+            logout: vi.fn(),
+          },
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: vi.fn(),
+          },
+        },
       ],
     });
 
     httpMock = TestBed.inject(HttpTestingController);
     httpClient = TestBed.inject(HttpClient);
     snackBar = TestBed.inject(MatSnackBar);
+    userService = TestBed.inject(UserService);
+    router = TestBed.inject(Router);
   });
 
   afterEach(() => {
@@ -94,6 +112,8 @@ describe('errorInterceptor', () => {
       },
     });
     httpMock.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(userService.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('should handle 403 Forbidden', () => {
@@ -110,6 +130,8 @@ describe('errorInterceptor', () => {
       },
     });
     httpMock.expectOne('/test').flush(null, { status: 403, statusText: 'Forbidden' });
+    expect(userService.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('should handle 404 Not Found', () => {

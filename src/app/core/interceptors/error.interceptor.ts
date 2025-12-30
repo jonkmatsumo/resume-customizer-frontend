@@ -1,7 +1,9 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { UserService } from '../services/user.service';
 
 /**
  * Global error interceptor.
@@ -9,6 +11,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const snackBar = inject(MatSnackBar);
+  const userService = inject(UserService);
+  const router = inject(Router);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -25,9 +29,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             break;
           case 401:
             errorMessage = 'Unauthorized. Please log in.';
+            userService.logout();
+            router.navigate(['/login']);
             break;
           case 403:
             errorMessage = 'Forbidden. You do not have permission.';
+            userService.logout(); // Optional: might just redirect or show error
+            router.navigate(['/login']);
             break;
           case 404:
             errorMessage = error.error?.message || 'Resource not found';

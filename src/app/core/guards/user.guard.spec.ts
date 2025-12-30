@@ -39,7 +39,7 @@ describe('userGuard', () => {
         {
           provide: Router,
           useValue: {
-            createUrlTree: vi.fn().mockReturnValue({ toString: () => '/register' } as UrlTree),
+            createUrlTree: vi.fn().mockReturnValue({ toString: () => '/login' } as UrlTree),
           },
         },
       ],
@@ -54,19 +54,19 @@ describe('userGuard', () => {
   });
 
   it('should allow access when user is logged in', () => {
-    userService.setUser(mockUser);
+    userService.setUser(mockUser, 'test-token');
 
     const result = TestBed.runInInjectionContext(() => userGuard({} as never, {} as never));
 
     expect(result).toBe(true);
   });
 
-  it('should redirect to /register when no user', () => {
+  it('should redirect to /login when no user', () => {
     userService.logout();
 
     const result = TestBed.runInInjectionContext(() => userGuard({} as never, {} as never));
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['/register']);
+    expect(router.createUrlTree).toHaveBeenCalledWith(['/login']);
     expect(result).not.toBe(true);
   });
 });

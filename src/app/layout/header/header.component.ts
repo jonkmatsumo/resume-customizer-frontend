@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,18 +22,21 @@ import { UserService } from '../../core/services/user.service';
       <span class="logo">Resume Customizer</span>
       <span class="spacer"></span>
       <nav>
-        <a mat-button routerLink="/profile" routerLinkActive="active">Profile</a>
-        <a mat-button routerLink="/experience" routerLinkActive="active">Experience</a>
-        <a mat-button routerLink="/resumes" routerLinkActive="active">Resumes</a>
-        <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
+        @if (userState.isAuthenticated()) {
+          <a mat-button routerLink="/profile" routerLinkActive="active">Profile</a>
+          <a mat-button routerLink="/experience" routerLinkActive="active">Experience</a>
+          <a mat-button routerLink="/resumes" routerLinkActive="active">Resumes</a>
+          <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
+        }
       </nav>
       <span class="spacer"></span>
-      @if (userState.currentUser(); as user) {
+      @if (userState.isAuthenticated()) {
         <span class="user-info">
-          {{ user.email }}
+          {{ userState.currentUser()?.email }}
         </span>
-      }
-      @if (!userState.isLoggedIn()) {
+        <button mat-button (click)="logout()">Logout</button>
+      } @else {
+        <a mat-button routerLink="/login">Login</a>
         <a mat-button routerLink="/register">Register</a>
       }
     </mat-toolbar>
@@ -59,4 +62,10 @@ import { UserService } from '../../core/services/user.service';
 })
 export class HeaderComponent {
   readonly userState = inject(UserService);
+  private readonly router = inject(Router);
+
+  logout(): void {
+    this.userState.logout();
+    this.router.navigate(['/login']);
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,11 +15,15 @@ import { UserService } from '../../../../core/services/user.service';
           <h1>Resume Customizer</h1>
           <p>Create tailored resumes for every job application</p>
           <div class="actions">
-            <button mat-raised-button color="primary" (click)="navigateToRegister()">
-              Get Started
-            </button>
-            @if (hasUser) {
-              <button mat-button (click)="navigateToProfile()">I already have an account</button>
+            @if (userState.isAuthenticated()) {
+              <button mat-raised-button color="primary" (click)="navigateToProfile()">
+                Go to Profile
+              </button>
+            } @else {
+              <button mat-raised-button color="primary" (click)="navigateToRegister()">
+                Get Started
+              </button>
+              <button mat-button (click)="navigateToLogin()">I already have an account</button>
             }
           </div>
         </mat-card-content>
@@ -48,19 +52,16 @@ import { UserService } from '../../../../core/services/user.service';
     `,
   ],
 })
-export class LandingComponent implements OnInit {
+export class LandingComponent {
   private readonly router = inject(Router);
-  private readonly userState = inject(UserService);
-
-  hasUser = false;
-
-  ngOnInit(): void {
-    const userId = this.userState.getStoredUserId();
-    this.hasUser = !!userId;
-  }
+  readonly userState = inject(UserService);
 
   navigateToRegister(): void {
     this.router.navigate(['/register']);
+  }
+
+  navigateToLogin(): void {
+    this.router.navigate(['/login']);
   }
 
   navigateToProfile(): void {
