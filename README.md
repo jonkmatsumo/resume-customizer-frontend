@@ -21,14 +21,20 @@ The frontend communicates with a containerized Go backend which orchestrates the
 
 ```mermaid
 flowchart LR
-    USER[Frontend User] <--> APP[Angular App]
+    USER[User] <--> APP[Angular App]
     APP <--> API[REST API]
     
-    subgraph "Agentic Backend"
-        API <--> AGENT[Pipeline Agent]
-        AGENT <--> LLM[Gemini 1.5 Pro]
-        AGENT <--> DB[(PostgreSQL)]
+    subgraph Docker
+        DB[(PostgreSQL)]
+        subgraph Application
+            API <--> AGENT[Pipeline Agent]
+        end
     end
+    
+    API <--> DB
+    AGENT <--> LLM[LLM API]
+    AGENT <--> SEARCH[Search API]
+    AGENT <--> DB
 ```
 
 > **Backend Setup Required**: This frontend requires the [Resume Customizer Backend](https://github.com/jonkmatsumo/resume-customizer) to be running locally. Follow the setup instructions in the backend repository before starting this application.
