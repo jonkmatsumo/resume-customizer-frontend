@@ -1,1 +1,33 @@
-/* You can add global styles to this file, and also import other style files */
+/* Angular Material Theme */
+@use '@angular/material' as mat;
+
+// Include Material core styles
+@include mat.core();
+
+// Define the theme using the indigo-pink color scheme
+$resume-customizer-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: (
+      brand-family: 'Roboto, sans-serif',
+      plain-family: 'Roboto, sans-serif',
+    ),
+  )
+);
+
+// Apply the theme
+html {
+  @include mat.all-component-themes($resume-customizer-theme);
+}
+
+/* Global styles */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
