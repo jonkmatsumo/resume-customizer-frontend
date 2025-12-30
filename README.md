@@ -1,59 +1,140 @@
-# ResumeCustomizerFrontend
+# Resume Customizer Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
+Frontend application for the Resume Customizer service, built with **Angular 21**.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 22+
+- npm 10+
+- Docker (optional, for containerized development)
+
+## Quick Start
 
 ```bash
-ng serve
+# Install dependencies
+npm install
+
+# Start development server
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+App will be available at `http://localhost:4200`
 
-## Code scaffolding
+## Development
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Local Development
 
 ```bash
-ng generate component component-name
+npm install
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Docker Development
 
 ```bash
-ng generate --help
+docker compose -f docker-compose.dev.yml up
+```
+
+App will be available at `http://localhost:4200`
+
+## Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm start` | Start development server |
+| `npm run build` | Build for production |
+| `npm test` | Run tests with Vitest |
+| `npm run test:ci` | Run tests once (CI mode) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage |
+| `npm run lint` | Check for linting errors |
+| `npm run lint:fix` | Auto-fix linting errors |
+| `npm run format` | Format code with Prettier |
+| `npm run format:check` | Check formatting |
+
+## Testing
+
+```bash
+npm test              # Run tests with Vitest
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage report
+```
+
+## Linting & Formatting
+
+```bash
+npm run lint          # Check for linting errors
+npm run lint:fix      # Auto-fix linting errors
+npm run format        # Format code with Prettier
+npm run format:check  # Check formatting
 ```
 
 ## Building
 
-To build the project run:
-
 ```bash
-ng build
+npm run build                               # Development build
+npm run build -- --configuration production # Production build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Docker
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Development Container
 
 ```bash
-ng test
+docker compose -f docker-compose.dev.yml up
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### Production Container
 
 ```bash
-ng e2e
+docker build -t resume-customizer-frontend:prod .
+docker run -p 3000:3000 resume-customizer-frontend:prod
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+App will be available at `http://localhost:3000`
 
-## Additional Resources
+> **Note**: The frontend runs on port 3000 in production to avoid conflicts with the backend API (port 8080).
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── services/          # API and shared services
+│   ├── app.config.ts      # Application configuration
+│   ├── app.routes.ts      # Route definitions
+│   ├── app.ts             # Root component
+│   └── app.html           # Root template
+├── environments/          # Environment configuration
+│   ├── environment.ts     # Development
+│   └── environment.prod.ts # Production
+├── styles.scss            # Global styles & Material theme
+└── main.ts                # Application bootstrap
+```
+
+## Angular 21 Features
+
+This project uses Angular 21 patterns:
+
+- **Standalone components** - No NgModules required
+- **`inject()` function** - Modern dependency injection
+- **`provide*` functions** - Functional providers in `app.config.ts`
+- **Vitest** - Modern test runner (replaces Karma)
+- **`@angular/build`** - New build system
+
+## Environment Configuration
+
+| Environment | API URL | File |
+|-------------|---------|------|
+| Development | `http://localhost:8080` | `environment.ts` |
+| Production | `https://api.resumecustomizer.com` | `environment.prod.ts` |
+
+## CI/CD
+
+GitHub Actions workflows:
+
+- **CI** (`ci.yml`): Runs on push/PR - lint, format, test, build
+- **CD** (`cd.yml`): Runs on main - Docker build and push
+- **Deploy Dev** (`deploy-dev.yml`): Deploy to development
+- **Deploy Prod** (`deploy-prod.yml`): Deploy to production
+
