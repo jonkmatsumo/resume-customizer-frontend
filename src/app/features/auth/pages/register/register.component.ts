@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,8 @@ import { UserService } from '../../../../core/services/user.service';
 import { ErrorService } from '../../../../core/services/error.service';
 import { User } from '../../../../core/models';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-register',
@@ -22,7 +24,10 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatButtonModule,
     LoadingSpinnerComponent,
+    MatIconModule,
+    RouterLink,
   ],
   template: `
     <div class="register-container">
@@ -49,6 +54,58 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
             </mat-form-field>
 
             <mat-form-field>
+              <mat-label>Password</mat-label>
+              <input
+                matInput
+                [type]="hidePassword() ? 'password' : 'text'"
+                formControlName="password"
+                required
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="'Hide password'"
+                [attr.aria-pressed]="hidePassword()"
+              >
+                <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (registerForm.get('password')?.hasError('required')) {
+                <mat-error>Password is required</mat-error>
+              }
+              @if (registerForm.get('password')?.hasError('minlength')) {
+                <mat-error>Password must be at least 8 characters</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Confirm Password</mat-label>
+              <input
+                matInput
+                [type]="hideConfirmPassword() ? 'password' : 'text'"
+                formControlName="confirmPassword"
+                required
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="toggleConfirmPasswordVisibility()"
+                [attr.aria-label]="'Hide password'"
+                [attr.aria-pressed]="hideConfirmPassword()"
+              >
+                <mat-icon>{{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (registerForm.get('confirmPassword')?.hasError('required')) {
+                <mat-error>Confirm Password is required</mat-error>
+              }
+              @if (registerForm.get('confirmPassword')?.hasError('passwordMismatch')) {
+                <mat-error>Passwords do not match</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
               <mat-label>Phone</mat-label>
               <input matInput type="tel" formControlName="phone" />
             </mat-form-field>
@@ -62,7 +119,7 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
               >
                 Create Profile
               </button>
-              <button mat-button type="button" (click)="onCancel()">Cancel</button>
+              <button mat-button type="button" routerLink="/">Cancel</button>
             </div>
 
             @if (isLoading()) {
@@ -112,14 +169,41 @@ export class RegisterComponent {
 
   registerForm: FormGroup;
   isLoading = signal(false);
+  hidePassword = signal(true);
+  hideConfirmPassword = signal(true);
 
   constructor() {
-    this.registerForm = this.fb.group({
-      name: ['', Validators.required],
-      email: ['', Validators.email],
-      phone: [''],
-    });
+    this.registerForm = this.fb.group(
+      {
+        name: ['', Validators.required],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(8)]],
+        confirmPassword: ['', Validators.required],
+        phone: [''],
+      },
+      { validators: this.passwordMatchValidator },
+    );
   }
+
+  private passwordMatchValidator: ValidatorFn = (
+    control: AbstractControl,
+  ): ValidationErrors | null => {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    } else {
+      // Only clear if the specific error exists to avoid clearing other errors (like required)
+      if (confirmPassword?.hasError('passwordMismatch')) {
+        // If we had more errors on confirmPassword we'd need to be careful, but here it's fine
+        // simpler to just re-evaluate required if needed, or assume it's handled by control validators
+        confirmPassword.setErrors(null);
+      }
+    }
+    return null;
+  };
 
   onSubmit(): void {
     if (this.registerForm.valid) {
@@ -129,7 +213,8 @@ export class RegisterComponent {
       this.api
         .post<User>('/users', {
           name: formValue.name,
-          email: formValue.email || undefined,
+          email: formValue.email,
+          password: formValue.password,
           phone: formValue.phone || undefined,
         })
         .subscribe({
@@ -146,7 +231,11 @@ export class RegisterComponent {
     }
   }
 
-  onCancel(): void {
-    this.router.navigate(['/']);
+  togglePasswordVisibility(): void {
+    this.hidePassword.update((value) => !value);
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.hideConfirmPassword.update((value) => !value);
   }
 }
