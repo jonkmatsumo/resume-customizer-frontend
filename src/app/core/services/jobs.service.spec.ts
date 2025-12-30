@@ -58,6 +58,14 @@ describe('JobsService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should have jobs as empty array initially', () => {
+    expect(service.jobs()).toEqual([]);
+  });
+
+  it('should have isLoading as false initially', () => {
+    expect(service.isLoading()).toBe(false);
+  });
+
   describe('loadJobs', () => {
     it('should load jobs and update signal', () => {
       apiServiceSpy.get.mockReturnValue(of(mockJobs));

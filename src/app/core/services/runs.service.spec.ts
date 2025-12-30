@@ -41,6 +41,14 @@ describe('RunsService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should have runs as empty array initially', () => {
+    expect(service.runs()).toEqual([]);
+  });
+
+  it('should have isLoading as false initially', () => {
+    expect(service.isLoading()).toBe(false);
+  });
+
   describe('loadRuns', () => {
     it('should load runs and update signal (no filters)', () => {
       apiServiceSpy.get.mockReturnValue(of(mockRuns));
