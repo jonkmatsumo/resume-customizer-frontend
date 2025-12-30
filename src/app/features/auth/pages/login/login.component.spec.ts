@@ -4,7 +4,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { ErrorService } from '../../../../core/services/error.service';
 import { Router, provideRouter } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Observable } from 'rxjs';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -76,6 +76,15 @@ describe('LoginComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/profile']);
     expect(errorServiceSpy.showSuccess).toHaveBeenCalled();
+  });
+
+  it('should show loading state during login', () => {
+    component.loginForm.setValue({ email: 'test@example.com', password: 'password123' });
+    userServiceSpy.login.mockReturnValue(new Observable()); // Never emits, keeps loading true
+
+    component.onSubmit();
+
+    expect(component.isLoading()).toBe(true);
   });
 
   it('should handle login error', () => {

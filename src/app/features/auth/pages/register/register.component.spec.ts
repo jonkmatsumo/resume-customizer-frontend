@@ -5,7 +5,7 @@ import { ApiService } from '../../../../services/api.service';
 import { ErrorService } from '../../../../core/services/error.service';
 import { Router, provideRouter } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Observable } from 'rxjs';
 import { User } from '../../../../core/models';
 
 describe('RegisterComponent', () => {
@@ -99,6 +99,21 @@ describe('RegisterComponent', () => {
     });
     expect(userServiceSpy.setUser).toHaveBeenCalledWith(mockUser);
     expect(router.navigate).toHaveBeenCalledWith(['/profile']);
+  });
+
+  it('should show loading state during registration', () => {
+    component.registerForm.setValue({
+      name: 'Test',
+      email: 'test@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+      phone: '',
+    });
+    apiServiceSpy.post.mockReturnValue(new Observable()); // Never emits
+
+    component.onSubmit();
+
+    expect(component.isLoading()).toBe(true);
   });
 
   it('should handle registration error', () => {
