@@ -51,7 +51,7 @@ describe('RunsService', () => {
 
   describe('loadRuns', () => {
     it('should load runs and update signal (no filters)', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
 
       service.loadRuns().subscribe();
 
@@ -61,7 +61,7 @@ describe('RunsService', () => {
     });
 
     it('should load runs with filters', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
 
       service.loadRuns({ status: 'completed', company: 'Google' }).subscribe();
 
@@ -70,20 +70,20 @@ describe('RunsService', () => {
     });
 
     it('should load runs with empty filters object', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
       service.loadRuns({}).subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.not.stringContaining('?'));
     });
 
     it('should load runs with status filter only', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
       service.loadRuns({ status: 'failed' }).subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('status=failed'));
       expect(apiServiceSpy.get).not.toHaveBeenCalledWith(expect.stringContaining('company'));
     });
 
     it('should load runs with company filter only', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
       service.loadRuns({ company: 'Meta' }).subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('company=Meta'));
       expect(apiServiceSpy.get).not.toHaveBeenCalledWith(expect.stringContaining('status'));
@@ -93,7 +93,7 @@ describe('RunsService', () => {
   describe('deleteRun', () => {
     it('should delete run and update signal', () => {
       apiServiceSpy.delete.mockReturnValue(of(void 0));
-      apiServiceSpy.get.mockReturnValue(of(mockRuns));
+      apiServiceSpy.get.mockReturnValue(of({ runs: mockRuns, count: 1 }));
       service.loadRuns().subscribe(); // Load initial data
 
       service.deleteRun('r1').subscribe();

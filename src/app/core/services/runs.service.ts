@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { Run, Artifact } from '../models';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 
 /**
  * Service to manage resume generation runs state.
@@ -33,7 +33,8 @@ export class RunsService {
     const query = params.toString();
     const endpoint = query ? `/runs?${query}` : '/runs';
 
-    return this.api.get<Run[]>(endpoint).pipe(
+    return this.api.get<{ count: number; runs: Run[] }>(endpoint).pipe(
+      map((response) => response.runs || []),
       tap((runs) => {
         this._runs.set(runs);
         this._isLoading.set(false);
