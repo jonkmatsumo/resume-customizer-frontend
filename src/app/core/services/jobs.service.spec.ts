@@ -68,7 +68,7 @@ describe('JobsService', () => {
 
   describe('loadJobs', () => {
     it('should load jobs and update signal', () => {
-      apiServiceSpy.get.mockReturnValue(of(mockJobs));
+      apiServiceSpy.get.mockReturnValue(of({ jobs: mockJobs, count: 2 }));
 
       service.loadJobs('u1').subscribe();
 
@@ -84,7 +84,7 @@ describe('JobsService', () => {
       apiServiceSpy.post.mockReturnValue(of(newJob));
 
       // Initial state
-      apiServiceSpy.get.mockReturnValue(of(mockJobs));
+      apiServiceSpy.get.mockReturnValue(of({ jobs: mockJobs, count: 2 }));
       service.loadJobs('u1').subscribe();
 
       const createReq: CreateJobRequest = {
@@ -105,7 +105,7 @@ describe('JobsService', () => {
       apiServiceSpy.put.mockReturnValue(of(updatedJob));
 
       // Initial state with 2 jobs
-      apiServiceSpy.get.mockReturnValue(of(mockJobs));
+      apiServiceSpy.get.mockReturnValue(of({ jobs: mockJobs, count: 2 }));
       service.loadJobs('u1').subscribe();
 
       const updateReq: UpdateJobRequest = { company: 'Updated Co' };
@@ -126,7 +126,7 @@ describe('JobsService', () => {
   describe('deleteJob', () => {
     it('should delete job and update signal', () => {
       apiServiceSpy.delete.mockReturnValue(of(void 0));
-      apiServiceSpy.get.mockReturnValue(of(mockJobs));
+      apiServiceSpy.get.mockReturnValue(of({ jobs: mockJobs, count: 2 }));
       service.loadJobs('u1').subscribe();
 
       service.deleteJob('1').subscribe();

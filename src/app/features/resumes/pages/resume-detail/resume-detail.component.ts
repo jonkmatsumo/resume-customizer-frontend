@@ -11,7 +11,6 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 import { RunsService } from '../../../../core/services/runs.service';
 import { ApiService } from '../../../../services/api.service';
 import { Run, Artifact } from '../../../../core/models';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 @Component({
@@ -24,7 +23,6 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
     MatProgressBarModule,
     MatExpansionModule,
     MatIconModule,
-    LoadingSpinnerComponent,
     SkeletonLoaderComponent,
   ],
   template: `

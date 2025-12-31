@@ -34,6 +34,9 @@
             ],
             "styles": [
               "src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "event-source-polyfill"
             ]
           },
           "configurations": {

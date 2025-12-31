@@ -8,7 +8,7 @@ import {
   CreateExperienceRequest,
   UpdateExperienceRequest,
 } from '../models';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 
 /**
  * Service to manage jobs and experiences state.
@@ -33,7 +33,8 @@ export class JobsService {
    */
   loadJobs(userId: string): Observable<Job[]> {
     this._isLoading.set(true);
-    return this.api.get<Job[]>(`/users/${userId}/jobs`).pipe(
+    return this.api.get<{ count: number; jobs: Job[] }>(`/users/${userId}/jobs`).pipe(
+      map((response) => response.jobs || []),
       tap((jobs) => {
         this._jobs.set(jobs);
         this._isLoading.set(false);

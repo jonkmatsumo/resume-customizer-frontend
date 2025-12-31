@@ -144,9 +144,17 @@ export class UserService {
   /**
    * Update user password
    */
+  /**
+   * Update user password
+   */
   updatePassword(data: UpdatePasswordRequest): Observable<UpdatePasswordResponse> {
+    const userId = this.getStoredUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
     this._isLoading.set(true);
-    return this.api.put<UpdatePasswordResponse>('/users/me/password', data).pipe(
+    return this.api.put<UpdatePasswordResponse>(`/users/${userId}/password`, data).pipe(
       tap({
         next: () => {
           this._isLoading.set(false);
@@ -160,15 +168,10 @@ export class UserService {
    * Load current user details
    */
   loadCurrentUser(): Observable<User> {
-    this._isLoading.set(true);
-    return this.api.get<User>('/users/me').pipe(
-      tap({
-        next: (user) => {
-          this._currentUser.set(user);
-          this._isLoading.set(false);
-        },
-        error: () => this._isLoading.set(false),
-      }),
-    );
+    const userId = this.getStoredUserId();
+    if (!userId) {
+      throw new Error('User ID not found in storage');
+    }
+    return this.loadUser(userId);
   }
 }
