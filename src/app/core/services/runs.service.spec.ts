@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { RunsService } from './runs.service';
 import { ApiService } from '../../services/api.service';
+import { UserService } from './user.service';
 import { of } from 'rxjs';
 import { Run } from '../models';
 
@@ -11,6 +12,9 @@ describe('RunsService', () => {
     post: ReturnType<typeof vi.fn>;
     put: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
+  };
+  let userServiceSpy: {
+    getStoredUserId: ReturnType<typeof vi.fn>;
   };
 
   const mockRuns: Run[] = [
@@ -31,8 +35,16 @@ describe('RunsService', () => {
       delete: vi.fn(),
     };
 
+    userServiceSpy = {
+      getStoredUserId: vi.fn().mockReturnValue('u1'),
+    };
+
     TestBed.configureTestingModule({
-      providers: [RunsService, { provide: ApiService, useValue: apiServiceSpy }],
+      providers: [
+        RunsService,
+        { provide: ApiService, useValue: apiServiceSpy },
+        { provide: UserService, useValue: userServiceSpy },
+      ],
     });
     service = TestBed.inject(RunsService);
   });
@@ -55,7 +67,7 @@ describe('RunsService', () => {
 
       service.loadRuns().subscribe();
 
-      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs');
+      expect(apiServiceSpy.get).toHaveBeenCalledWith('/users/u1/runs');
       expect(service.runs()).toEqual(mockRuns);
       expect(service.isLoading()).toBe(false);
     });
@@ -67,6 +79,7 @@ describe('RunsService', () => {
 
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('status=completed'));
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('company=Google'));
+      expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('/users/u1/runs'));
     });
 
     it('should load runs with empty filters object', () => {
@@ -87,6 +100,19 @@ describe('RunsService', () => {
       service.loadRuns({ company: 'Meta' }).subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith(expect.stringContaining('company=Meta'));
       expect(apiServiceSpy.get).not.toHaveBeenCalledWith(expect.stringContaining('status'));
+    });
+
+    it('should return error if user ID not found', () => {
+      userServiceSpy.getStoredUserId.mockReturnValue(null);
+      let errorCalled = false;
+      service.loadRuns().subscribe({
+        error: (err) => {
+          expect(err).toBe('User ID not found');
+          expect(service.isLoading()).toBe(false);
+          errorCalled = true;
+        },
+      });
+      expect(errorCalled).toBe(true);
     });
   });
 
@@ -125,7 +151,10 @@ describe('RunsService', () => {
     it('should download resume', () => {
       apiServiceSpy.get.mockReturnValue(of(new Blob()));
       service.downloadResume('r1').subscribe();
-      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs/r1/resume.tex');
+      expect(apiServiceSpy.get).toHaveBeenCalledWith(
+        '/runs/r1/resume.tex',
+        expect.objectContaining({ responseType: 'blob' }),
+      );
     });
   });
 });

@@ -1,7 +1,19 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+export interface ApiOptions {
+  headers?: HttpHeaders | Record<string, string | string[]>;
+  context?: HttpContext;
+  observe?: 'body' | 'events' | 'response';
+  params?:
+    | HttpParams
+    | Record<string, string | number | boolean | readonly (string | number | boolean)[]>;
+  reportProgress?: boolean;
+  responseType?: 'arraybuffer' | 'blob' | 'json' | 'text';
+  withCredentials?: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -38,10 +50,13 @@ export class ApiService {
     return this.authToken();
   }
 
-  get<T>(endpoint: string): Observable<T> {
+  get<T>(endpoint: string, options: ApiOptions = {}): Observable<T> {
+    const headers = options.headers || this.getHeaders();
     return this.http.get<T>(`${this.apiUrl}${endpoint}`, {
-      headers: this.getHeaders(),
-    });
+      ...options,
+      headers,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any) as Observable<T>;
   }
 
   post<T>(endpoint: string, data: unknown): Observable<T> {

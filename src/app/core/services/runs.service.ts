@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ApiService } from '../../services/api.service';
+import { UserService } from './user.service';
 import { Run, Artifact } from '../models';
 import { Observable, tap, map } from 'rxjs';
 
@@ -12,6 +13,7 @@ import { Observable, tap, map } from 'rxjs';
 })
 export class RunsService {
   private readonly api = inject(ApiService);
+  private readonly userService = inject(UserService);
 
   // Signals for reactive state
   private readonly _runs = signal<Run[]>([]);
@@ -26,12 +28,22 @@ export class RunsService {
    */
   loadRuns(filters?: { status?: string; company?: string }): Observable<Run[]> {
     this._isLoading.set(true);
+    const userId = this.userService.getStoredUserId();
+
+    if (!userId) {
+      this._isLoading.set(false);
+      return new Observable((subscriber) => {
+        subscriber.error('User ID not found');
+        subscriber.complete();
+      });
+    }
+
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.company) params.append('company', filters.company);
 
     const query = params.toString();
-    const endpoint = query ? `/runs?${query}` : '/runs';
+    const endpoint = query ? `/users/${userId}/runs?${query}` : `/users/${userId}/runs`;
 
     return this.api.get<{ count: number; runs: Run[] }>(endpoint).pipe(
       map((response) => response.runs || []),
@@ -79,6 +91,8 @@ export class RunsService {
    */
   downloadResume(runId: string): Observable<Blob> {
     // Note: This may need adjustment based on actual API response type
-    return this.api.get<Blob>(`/runs/${runId}/resume.tex`);
+    return this.api.get<Blob>(`/runs/${runId}/resume.tex`, {
+      responseType: 'blob',
+    });
   }
 }
