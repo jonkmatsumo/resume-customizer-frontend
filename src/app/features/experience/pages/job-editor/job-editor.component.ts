@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
@@ -245,6 +245,7 @@ export class JobEditorComponent implements OnInit {
   private readonly jobsState = inject(JobsService);
   private readonly userState = inject(UserService);
   private readonly errorService = inject(ErrorService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   jobForm!: FormGroup;
   isEditMode = signal(false);
@@ -309,6 +310,7 @@ export class JobEditorComponent implements OnInit {
       next: (experiences) => {
         if (existingJob) {
           this.initializeForm(existingJob, experiences);
+          this.cdr.detectChanges();
         } else {
           // If job wasn't in list (e.g. direct nav), we might need to fetch it or rely on parent list reload
           // For robustness, if not found, we should probably redirect or fetch specific job.
@@ -318,6 +320,7 @@ export class JobEditorComponent implements OnInit {
             const fetchedJob = jobs.find((j) => j.id === this.jobId);
             if (fetchedJob) {
               this.initializeForm(fetchedJob, experiences);
+              this.cdr.detectChanges();
             } else {
               this.errorService.showError('Job not found');
               this.router.navigate(['/experience']);

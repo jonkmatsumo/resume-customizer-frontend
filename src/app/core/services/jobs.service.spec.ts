@@ -139,7 +139,7 @@ describe('JobsService', () => {
 
   describe('Experience Methods', () => {
     it('should load experiences', () => {
-      apiServiceSpy.get.mockReturnValue(of([]));
+      apiServiceSpy.get.mockReturnValue(of({ experiences: [], count: 0 }));
       service.loadExperiences('1').subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith('/jobs/1/experiences');
     });

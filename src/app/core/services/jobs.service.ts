@@ -79,7 +79,9 @@ export class JobsService {
    * Load experiences for a job
    */
   loadExperiences(jobId: string): Observable<Experience[]> {
-    return this.api.get<Experience[]>(`/jobs/${jobId}/experiences`);
+    return this.api
+      .get<{ count: number; experiences: Experience[] }>(`/jobs/${jobId}/experiences`)
+      .pipe(map((response) => response.experiences || []));
   }
 
   /**
