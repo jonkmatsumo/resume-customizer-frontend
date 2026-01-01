@@ -52,11 +52,12 @@ export class ApiService {
 
   get<T>(endpoint: string, options: ApiOptions = {}): Observable<T> {
     const headers = options.headers || this.getHeaders();
-    return this.http.get<T>(`${this.apiUrl}${endpoint}`, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const requestOptions: any = {
       ...options,
       headers,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as Observable<T>;
+    };
+    return this.http.get<T>(`${this.apiUrl}${endpoint}`, requestOptions) as Observable<T>;
   }
 
   post<T>(endpoint: string, data: unknown): Observable<T> {

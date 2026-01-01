@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { RunsService } from '../../../../core/services/runs.service';
-import { ApiService } from '../../../../services/api.service';
 import { Run, Artifact } from '../../../../core/models';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
@@ -27,7 +26,24 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
   ],
   template: `
     <div class="detail-container">
-      @if (run()) {
+      @if (error()) {
+        <mat-card class="error-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar color="warn">error</mat-icon>
+            <mat-card-title>Resume Not Found</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="error-message">
+              {{ error() }}
+            </p>
+            <div class="actions">
+              <button mat-raised-button color="primary" (click)="goBack()">
+                Back to Dashboard
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      } @else if (run()) {
         <mat-card>
           <mat-card-header>
             <mat-card-title>{{ run()?.company || 'Untitled' }}</mat-card-title>
@@ -93,6 +109,14 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
         max-width: 1000px;
         margin: 0 auto;
       }
+      .error-card {
+        border-left: 4px solid #f44336;
+      }
+      .error-message {
+        margin: 1rem 0 2rem;
+        color: #555;
+        font-size: 1.1rem;
+      }
       .status-section {
         margin-top: 1rem;
         margin-bottom: 2rem;
@@ -155,9 +179,9 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly runsState = inject(RunsService);
-  private readonly api = inject(ApiService);
 
   run = signal<Run | null>(null);
+  error = signal<string | null>(null);
   artifacts = signal<Artifact[]>([]);
   currentStep = signal<string>('Initializing...');
   private eventSource?: EventSourcePolyfill;
@@ -184,6 +208,7 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
   }
 
   loadRun(runId: string): void {
+    this.error.set(null);
     this.runsState.getRunStatus(runId).subscribe({
       next: (run) => {
         this.run.set(run);
@@ -191,8 +216,13 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
           this.setupSSE(runId);
         }
       },
-      error: () => {
-        // Handle error
+      error: (err) => {
+        console.error('Error loading run:', err);
+        // The interceptor shows the snackbar, but we also want to show state in UI
+        this.error.set(
+          err.error?.message ||
+            'Could not find the requested resume. It may have been deleted or does not exist.',
+        );
       },
     });
   }
@@ -201,6 +231,10 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
     this.runsState.getArtifacts(runId).subscribe({
       next: (artifacts) => {
         this.artifacts.set(artifacts);
+      },
+      error: () => {
+        // Artifacts might not exist yet or fail, arguably not a fatal error for the whole page
+        // unless run also failed.
       },
     });
   }
@@ -227,14 +261,20 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.runsState.getRunStatus(runId).subscribe((updatedRun) => {
-        this.run.set(updatedRun);
-        // Refresh artifacts as well if they might appear
-        this.loadArtifacts(runId);
+      this.runsState.getRunStatus(runId).subscribe({
+        next: (updatedRun) => {
+          this.run.set(updatedRun);
+          // Refresh artifacts as well if they might appear
+          this.loadArtifacts(runId);
 
-        if (updatedRun.status !== 'running') {
+          if (updatedRun.status !== 'running') {
+            clearInterval(intervalId);
+          }
+        },
+        error: () => {
+          // If polling fails, maybe stop polling?
           clearInterval(intervalId);
-        }
+        },
       });
     }, 3000);
 
