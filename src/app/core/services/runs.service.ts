@@ -1,8 +1,9 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { UserService } from './user.service';
-import { Run, Artifact } from '../models';
-import { Observable, tap, map } from 'rxjs';
+import { Run, Artifact, RunStepsResponse } from '../models';
+import { Observable, tap, map, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 /**
  * Service to manage resume generation runs state.
@@ -66,10 +67,47 @@ export class RunsService {
   }
 
   /**
+   * Get run steps with detailed status information
+   * Uses the /v1/runs/{run_id}/steps endpoint
+   */
+  getRunSteps(runId: string): Observable<RunStepsResponse> {
+    return this.api.get<RunStepsResponse>(`/runs/${runId}/steps`);
+  }
+
+  /**
+   * Get basic run information (company, role, dates)
+   * Uses legacy /status/{id} endpoint for temporary backward compatibility
+   * TODO: Replace with GET /v1/runs/{id} endpoint when available
+   */
+  getRunBasicInfo(runId: string): Observable<Run> {
+    return this.api.get<Run>(`/status/${runId}`);
+  }
+
+  /**
    * Get run status
+   * Internally uses getRunSteps() endpoint but returns Run interface for compatibility
+   * For detailed step information, use getRunSteps() directly
    */
   getRunStatus(runId: string): Observable<Run> {
-    return this.api.get<Run>(`/status/${runId}`);
+    // Use getRunSteps() internally and combine with basic info
+    return forkJoin({
+      steps: this.getRunSteps(runId),
+      basicInfo: this.getRunBasicInfo(runId).pipe(
+        catchError(() => of(null)), // Non-fatal if legacy endpoint unavailable
+      ),
+    }).pipe(
+      map(
+        ({ steps, basicInfo }) =>
+          ({
+            id: steps.run_id,
+            status: steps.status,
+            company: basicInfo?.company,
+            role: basicInfo?.role,
+            created_at: basicInfo?.created_at || '',
+            updated_at: basicInfo?.updated_at || '',
+          }) as Run,
+      ),
+    );
   }
 
   /**

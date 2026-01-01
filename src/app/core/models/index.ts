@@ -26,7 +26,17 @@ export type { Story } from './story.model';
 export type { Bullet, EvidenceStrength } from './bullet.model';
 
 // Run models
-export type { Run, RunStatus, CreateRunRequest } from './run.model';
+export type {
+  Run,
+  RunStatus,
+  CreateRunRequest,
+  StepStatus,
+  RunStep,
+  StepSummary,
+  RunStepsResponse,
+} from './run.model';
+
+export { STEP_NAMES } from './run.model';
 
 // Artifact models
 export type { Artifact, ArtifactStep, ArtifactCategory } from './artifact.model';

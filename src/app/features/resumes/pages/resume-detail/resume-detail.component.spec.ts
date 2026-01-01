@@ -13,6 +13,8 @@ describe('ResumeDetailComponent', () => {
   let fixture: ComponentFixture<ResumeDetailComponent>;
   let runsServiceMock: {
     getRunStatus: ReturnType<typeof vi.fn>;
+    getRunSteps: ReturnType<typeof vi.fn>;
+    getRunBasicInfo: ReturnType<typeof vi.fn>;
     getArtifacts: ReturnType<typeof vi.fn>;
     downloadResume: ReturnType<typeof vi.fn>;
   };
@@ -21,10 +23,11 @@ describe('ResumeDetailComponent', () => {
   };
 
   const mockRunId = '123-abc';
-
   beforeEach(async () => {
     runsServiceMock = {
       getRunStatus: vi.fn(),
+      getRunSteps: vi.fn(),
+      getRunBasicInfo: vi.fn(),
       getArtifacts: vi.fn(),
       downloadResume: vi.fn(),
     };
@@ -55,14 +58,15 @@ describe('ResumeDetailComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('should display error message when loading run fails with 404', () => {
+  it('should display error message when loading run steps fails', () => {
     const errorResponse = new HttpErrorResponse({
       error: { message: 'Run not found' },
       status: 404,
       statusText: 'Not Found',
     });
 
-    runsServiceMock.getRunStatus.mockReturnValue(throwError(() => errorResponse));
+    runsServiceMock.getRunSteps.mockReturnValue(throwError(() => errorResponse));
+    runsServiceMock.getRunBasicInfo.mockReturnValue(of({})); // Should handle gracefully
     runsServiceMock.getArtifacts.mockReturnValue(of([]));
 
     fixture.detectChanges(); // triggers ngOnInit
@@ -83,16 +87,40 @@ describe('ResumeDetailComponent', () => {
       status: 500,
     });
 
-    runsServiceMock.getRunStatus.mockReturnValue(throwError(() => errorResponse));
+    runsServiceMock.getRunSteps.mockReturnValue(throwError(() => errorResponse));
+    runsServiceMock.getRunBasicInfo.mockReturnValue(of({}));
     runsServiceMock.getArtifacts.mockReturnValue(of([]));
 
     fixture.detectChanges();
 
-    expect(component.error()).toContain('Could not find the requested resume');
+    expect(component.error()).toContain('Failed to load run details');
   });
 
   it('should navigate back to dashboard when goBack is called', () => {
     component.goBack();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/resumes']);
+  });
+
+  it('should display steps when loaded successfully', () => {
+    const mockStepsResponse = {
+      run_id: '123',
+      status: 'completed',
+      steps: [
+        { step: 'step1', status: 'completed', duration_ms: 1000 },
+        { step: 'step2', status: 'in_progress' },
+      ],
+      summary: { total: 2, completed: 1, failed: 0, in_progress: 1, pending: 0 },
+    };
+
+    runsServiceMock.getRunSteps.mockReturnValue(of(mockStepsResponse));
+    runsServiceMock.getRunBasicInfo.mockReturnValue(of({ company: 'Test Corp', role: 'Dev' }));
+    runsServiceMock.getArtifacts.mockReturnValue(of([]));
+
+    fixture.detectChanges();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    expect(nativeElement.textContent).toContain('Test Corp');
+    expect(nativeElement.textContent).toContain('Dev');
+    expect(nativeElement.querySelectorAll('.step-item').length).toBe(2);
   });
 });

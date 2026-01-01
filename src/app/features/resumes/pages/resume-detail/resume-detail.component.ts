@@ -7,9 +7,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { EventSourcePolyfill } from 'event-source-polyfill';
 import { RunsService } from '../../../../core/services/runs.service';
-import { Run, Artifact } from '../../../../core/models';
+import { Run, Artifact, RunStepsResponse, StepStatus } from '../../../../core/models';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 @Component({
@@ -43,24 +42,73 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
             </div>
           </mat-card-content>
         </mat-card>
-      } @else if (run()) {
+      } @else if (runBasicInfo()) {
         <mat-card>
           <mat-card-header>
-            <mat-card-title>{{ run()?.company || 'Untitled' }}</mat-card-title>
-            <mat-card-subtitle>{{ run()?.role || 'No role specified' }}</mat-card-subtitle>
+            <mat-card-title>{{ runBasicInfo()?.company || 'Untitled' }}</mat-card-title>
+            <mat-card-subtitle>{{ runBasicInfo()?.role || 'No role specified' }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <div class="status-section">
-              <span class="status-badge" [class]="'status-' + run()?.status">
-                {{ run()?.status }}
+              <span class="status-badge" [class]="'status-' + runSteps()?.status">
+                {{ runSteps()?.status }}
               </span>
-              <p>Created: {{ formatDate(run()?.created_at) }}</p>
+              <p>Created: {{ formatDate(runBasicInfo()?.created_at) }}</p>
             </div>
 
-            @if (run()?.status === 'running') {
-              <div class="progress-section">
-                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                <p>{{ currentStep() }}</p>
+            @if (runSteps()) {
+              <div class="steps-section">
+                <h3>Pipeline Steps</h3>
+
+                <!-- Summary counts -->
+                @if (runSteps()?.summary) {
+                  <div class="summary-stats">
+                    <span class="stat-item">
+                      <strong>{{ runSteps()?.summary?.completed }}</strong> completed
+                    </span>
+                    <span class="stat-item">
+                      <strong>{{ runSteps()?.summary?.failed }}</strong> failed
+                    </span>
+                    <span class="stat-item">
+                      <strong>{{ runSteps()?.summary?.in_progress }}</strong> in progress
+                    </span>
+                    <span class="stat-item">
+                      <strong>{{ runSteps()?.summary?.pending }}</strong> pending
+                    </span>
+                  </div>
+                }
+
+                <!-- Steps list (simple list format) -->
+                <div class="steps-list">
+                  @for (step of runSteps()?.steps; track step.step) {
+                    <div class="step-item" [class]="'step-' + step.status">
+                      <div class="step-header">
+                        <mat-icon class="step-icon">{{ getStepIcon(step.status) }}</mat-icon>
+                        <span class="step-name">{{ formatStepName(step.step) }}</span>
+                        <span class="step-status-badge" [class]="'status-' + step.status">
+                          {{ step.status }}
+                        </span>
+                      </div>
+
+                      @if (step.error_message) {
+                        <div class="step-error">
+                          <mat-icon>error</mat-icon>
+                          <span>{{ step.error_message }}</span>
+                        </div>
+                      }
+
+                      @if (step.duration_ms) {
+                        <div class="step-timing">
+                          Duration: {{ formatDuration(step.duration_ms) }}
+                        </div>
+                      }
+
+                      @if (step.started_at) {
+                        <div class="step-timing">Started: {{ formatDate(step.started_at) }}</div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
             }
 
@@ -82,7 +130,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
             }
 
             <div class="actions">
-              @if (run()?.status === 'completed') {
+              @if (runSteps()?.status === 'completed') {
                 <button mat-raised-button color="primary" (click)="downloadResume()">
                   Download LaTeX
                 </button>
@@ -147,13 +195,98 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
         color: #d32f2f;
       }
 
-      .progress-section {
+      .steps-section {
         margin-bottom: 2rem;
       }
-      .progress-section p {
+
+      .summary-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .step-item {
+        padding: 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        border-left: 4px solid #e0e0e0;
+      }
+
+      .step-item.step-completed {
+        border-left-color: #4caf50;
+        background-color: #f1f8e9;
+      }
+
+      .step-item.step-failed {
+        border-left-color: #f44336;
+        background-color: #ffebee;
+      }
+
+      .step-item.step-in_progress {
+        border-left-color: #2196f3;
+        background-color: #e3f2fd;
+      }
+
+      .step-item.step-pending {
+        border-left-color: #9e9e9e;
+        background-color: #fafafa;
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .step-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .step-name {
+        flex: 1;
+        font-weight: 500;
+      }
+
+      .step-status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+      }
+
+      .step-error {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         margin-top: 0.5rem;
+        padding: 0.5rem;
+        background-color: #ffebee;
+        border-radius: 4px;
+        color: #c62828;
+      }
+
+      .step-timing {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
         color: #666;
-        font-style: italic;
       }
 
       .artifacts-section {
@@ -180,49 +313,55 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly runsState = inject(RunsService);
 
-  run = signal<Run | null>(null);
+  runSteps = signal<RunStepsResponse | null>(null);
+  runBasicInfo = signal<Run | null>(null);
   error = signal<string | null>(null);
   artifacts = signal<Artifact[]>([]);
-  currentStep = signal<string>('Initializing...');
-  private eventSource?: EventSourcePolyfill;
+
+  private pollingInterval?: ReturnType<typeof setInterval>;
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
     const runId = this.route.snapshot.paramMap.get('runId');
     if (runId) {
-      this.loadRun(runId);
+      this.loadRunSteps(runId);
       this.loadArtifacts(runId);
     }
   }
 
   ngOnDestroy(): void {
-    this.closeSSE();
+    this.stopPolling();
     this.subscriptions.unsubscribe();
   }
 
-  closeSSE(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = undefined;
-    }
-  }
-
-  loadRun(runId: string): void {
+  loadRunSteps(runId: string): void {
     this.error.set(null);
-    this.runsState.getRunStatus(runId).subscribe({
-      next: (run) => {
-        this.run.set(run);
-        if (run.status === 'running') {
-          this.setupSSE(runId);
+    this.runsState.getRunSteps(runId).subscribe({
+      next: (response) => {
+        this.runSteps.set(response);
+
+        if (response.status === 'running') {
+          this.setupPolling(runId);
         }
       },
       error: (err) => {
-        console.error('Error loading run:', err);
-        // The interceptor shows the snackbar, but we also want to show state in UI
-        this.error.set(
-          err.error?.message ||
-            'Could not find the requested resume. It may have been deleted or does not exist.',
-        );
+        console.error('Error loading run steps:', err);
+        const errorMsg =
+          err.error?.message || 'Failed to load run details. Some information may be unavailable.';
+        this.error.set(errorMsg);
+      },
+    });
+
+    this.loadRunBasicInfo(runId);
+  }
+
+  loadRunBasicInfo(runId: string): void {
+    this.runsState.getRunBasicInfo(runId).subscribe({
+      next: (run) => {
+        this.runBasicInfo.set(run);
+      },
+      error: () => {
+        // Non-fatal - basic info is optional, can proceed with partial data
       },
     });
   }
@@ -233,56 +372,60 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
         this.artifacts.set(artifacts);
       },
       error: () => {
-        // Artifacts might not exist yet or fail, arguably not a fatal error for the whole page
-        // unless run also failed.
+        // Artifacts might not exist yet or fail
       },
     });
   }
 
-  setupSSE(runId: string): void {
-    // Re-connect to stream to listen for updates.
-    // NOTE: The current backend design might only stream during creation POST.
-    // If backend supports re-attaching to stream via GET /run/:id/stream, we'd use that.
-    // Since I don't see a GET stream endpoint in previous context, this might be a limitation.
-    // However, for verify/demo, assuming polling or just initial state might be needed if stream is lost.
+  setupPolling(runId: string): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
 
-    // PROPOSED: If status is running, we should poll status every few seconds as fallback if no stream endpoint.
-    // Or assuming the /run/stream endpoint allows "listening" to an active run.
+    this.pollingInterval = setInterval(() => {
+      const currentStatus = this.runSteps()?.status;
 
-    // Let's implement active polling for status updates if running, as it's more robust than assuming SSE re-attach without specific API support.
-    // But since user requested SSE, I will try to support it if possible.
-    // Given the dialog implemented POST connection, likely the connection is lost on nav.
-    // If the requirements implied SSE on detail page, the backend needs a GET stream support.
-
-    // Fallback: Poll status every 5 seconds until completed.
-    const intervalId = setInterval(() => {
-      if (this.run()?.status === 'completed' || this.run()?.status === 'failed') {
-        clearInterval(intervalId);
+      if (
+        currentStatus === 'completed' ||
+        currentStatus === 'failed' ||
+        currentStatus === 'canceled'
+      ) {
+        this.stopPolling();
         return;
       }
 
-      this.runsState.getRunStatus(runId).subscribe({
-        next: (updatedRun) => {
-          this.run.set(updatedRun);
-          // Refresh artifacts as well if they might appear
-          this.loadArtifacts(runId);
+      this.runsState.getRunSteps(runId).subscribe({
+        next: (response) => {
+          this.runSteps.set(response);
 
-          if (updatedRun.status !== 'running') {
-            clearInterval(intervalId);
+          if (response.status !== 'running') {
+            this.stopPolling();
+          }
+
+          // Refresh artifacts if needed
+          const hasNewCompletedSteps = response.steps.some(
+            (step) => step.status === 'completed' && step.artifact_id,
+          );
+          if (hasNewCompletedSteps) {
+            this.loadArtifacts(runId);
           }
         },
         error: () => {
-          // If polling fails, maybe stop polling?
-          clearInterval(intervalId);
+          this.stopPolling();
         },
       });
     }, 3000);
+  }
 
-    this.subscriptions.add(new Subscription(() => clearInterval(intervalId)));
+  stopPolling(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = undefined;
+    }
   }
 
   downloadResume(): void {
-    const runId = this.run()?.id;
+    const runId = this.runSteps()?.run_id;
     if (!runId) return;
 
     this.runsState.downloadResume(runId).subscribe({
@@ -293,6 +436,10 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
         a.download = `resume-${runId}.tex`;
         a.click();
         window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error downloading resume:', err);
+        this.error.set('Failed to download resume. Please check your connection and try again.');
       },
     });
   }
@@ -307,5 +454,36 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/resumes']);
+  }
+
+  getStepIcon(status: StepStatus): string {
+    switch (status) {
+      case 'completed':
+        return 'check_circle';
+      case 'failed':
+        return 'error';
+      case 'in_progress':
+        return 'hourglass_empty';
+      case 'pending':
+        return 'schedule';
+      case 'blocked':
+        return 'block';
+      case 'skipped':
+        return 'skip_next';
+      default:
+        return 'help';
+    }
+  }
+
+  formatStepName(stepName: string): string {
+    return stepName;
+  }
+
+  formatDuration(ms: number): string {
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}m ${seconds}s`;
   }
 }
