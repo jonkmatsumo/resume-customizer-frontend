@@ -17,12 +17,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/pages/register/register.component').then((m) => m.RegisterComponent),
   },
-  {
-    path: 'profile',
-    loadComponent: () =>
-      import('./features/profile/pages/profile/profile.component').then((m) => m.ProfileComponent),
-    canActivate: [userGuard],
-  },
+
   {
     path: 'experience',
     loadComponent: () =>

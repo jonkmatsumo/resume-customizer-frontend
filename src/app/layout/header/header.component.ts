@@ -23,7 +23,6 @@ import { UserService } from '../../core/services/user.service';
       <span class="spacer"></span>
       <nav>
         @if (userState.isAuthenticated()) {
-          <a mat-button routerLink="/profile" routerLinkActive="active">Profile</a>
           <a mat-button routerLink="/experience" routerLinkActive="active">Experience</a>
           <a mat-button routerLink="/resumes" routerLinkActive="active">Resumes</a>
           <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
