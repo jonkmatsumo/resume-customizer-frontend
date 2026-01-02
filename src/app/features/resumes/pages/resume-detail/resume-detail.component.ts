@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 import { RunsService } from '../../../../core/services/runs.service';
 import { Run, Artifact, RunStepsResponse, StepStatus } from '../../../../core/models';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
+import { NgxKatexComponent } from 'ngx-katex';
 
 @Component({
   selector: 'app-resume-detail',
@@ -21,7 +22,9 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
     MatProgressBarModule,
     MatExpansionModule,
     MatIconModule,
+    MatIconModule,
     SkeletonLoaderComponent,
+    NgxKatexComponent,
   ],
   template: `
     <div class="detail-container">
@@ -143,7 +146,18 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
                         </button>
                         <button mat-button (click)="downloadResume()">Download LaTeX</button>
                       </div>
-                      <pre class="latex-content">{{ resumeText() }}</pre>
+                      <div class="latex-render-container">
+                        <ngx-katex
+                          [equation]="resumeText() || ''"
+                          [options]="{ throwOnError: false, displayMode: true }"
+                        ></ngx-katex>
+                      </div>
+                      <mat-expansion-panel class="source-code-panel">
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>View LaTeX Source</mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <pre class="latex-content">{{ resumeText() }}</pre>
+                      </mat-expansion-panel>
                     </div>
                   } @else {
                     <div class="resume-actions">

@@ -8,6 +8,20 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+import { Component, Input } from '@angular/core';
+import { NgxKatexComponent } from 'ngx-katex';
+
+@Component({
+  // eslint-disable-next-line @angular-eslint/component-selector
+  selector: 'ngx-katex',
+  standalone: true,
+  template: '',
+})
+class MockNgxKatexComponent {
+  @Input() equation: string | undefined;
+  @Input() options: object | undefined;
+}
+
 describe('ResumeDetailComponent', () => {
   let component: ResumeDetailComponent;
   let fixture: ComponentFixture<ResumeDetailComponent>;
@@ -54,7 +68,12 @@ describe('ResumeDetailComponent', () => {
         },
         provideHttpClient(),
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(ResumeDetailComponent, {
+        remove: { imports: [NgxKatexComponent] },
+        add: { imports: [MockNgxKatexComponent] },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(ResumeDetailComponent);
     component = fixture.componentInstance;

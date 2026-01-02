@@ -59,7 +59,7 @@ describe('HeaderComponent', () => {
     expect(element.textContent).toContain('test@example.com');
     expect(element.textContent).toContain('Logout');
     expect(element.textContent).not.toContain('Login');
-    expect(element.textContent).toContain('Profile');
+    expect(element.textContent).toContain('Settings');
   });
 
   it('should call logout and navigate on logout click', () => {
