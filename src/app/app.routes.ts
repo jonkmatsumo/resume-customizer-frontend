@@ -56,6 +56,14 @@ export const routes: Routes = [
     canActivate: [userGuard],
   },
   {
+    path: 'resumes/new',
+    loadComponent: () =>
+      import('./features/resumes/pages/start-resume/start-resume.component').then(
+        (m) => m.StartResumeComponent,
+      ),
+    canActivate: [userGuard],
+  },
+  {
     path: 'resumes/:runId',
     loadComponent: () =>
       import('./features/resumes/pages/resume-detail/resume-detail.component').then(

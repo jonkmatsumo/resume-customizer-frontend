@@ -6,7 +6,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +13,6 @@ import { RunsService } from '../../../../core/services/runs.service';
 import { Run } from '../../../../core/models';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { StartResumeDialogComponent } from '../../components/start-resume-dialog/start-resume-dialog.component';
 
 @Component({
   selector: 'app-resume-dashboard',
@@ -36,7 +34,7 @@ import { StartResumeDialogComponent } from '../../components/start-resume-dialog
     <div class="dashboard-container">
       <div class="header">
         <h1>Resume Generation</h1>
-        <button mat-raised-button color="primary" (click)="openStartDialog()">
+        <button mat-raised-button color="primary" (click)="startNewResume()">
           <mat-icon>add</mat-icon>
           Start New Resume
         </button>
@@ -74,7 +72,7 @@ import { StartResumeDialogComponent } from '../../components/start-resume-dialog
           title="No resume generations"
           message="Start by generating your first resume."
           actionLabel="Start New Resume"
-          (onAction)="openStartDialog()"
+          (onAction)="startNewResume()"
         ></app-empty-state>
       }
 
@@ -188,7 +186,6 @@ import { StartResumeDialogComponent } from '../../components/start-resume-dialog
 })
 export class ResumeDashboardComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
   public readonly runsState = inject(RunsService);
 
   statusFilter = '';
@@ -223,16 +220,8 @@ export class ResumeDashboardComponent implements OnInit {
     this.filteredRuns.set(filtered);
   }
 
-  openStartDialog(): void {
-    const dialogRef = this.dialog.open(StartResumeDialogComponent, {
-      width: '500px',
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loadRuns();
-      }
-    });
+  startNewResume(): void {
+    this.router.navigate(['/resumes/new']);
   }
 
   viewRun(runId: string): void {
