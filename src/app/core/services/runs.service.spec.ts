@@ -130,10 +130,62 @@ describe('RunsService', () => {
   });
 
   describe('Other Methods', () => {
-    it('should get run status', () => {
-      apiServiceSpy.get.mockReturnValue(of({}));
-      service.getRunStatus('r1').subscribe();
-      expect(apiServiceSpy.get).toHaveBeenCalledWith('/status/r1');
+    it('should get run status (combines steps and basic info)', () => {
+      // Mock getRunSteps response
+      apiServiceSpy.get.mockImplementation((url: string) => {
+        if (url.includes('/steps')) {
+          return of({ run_id: 'r1', status: 'completed', steps: [], summary: {} });
+        }
+        // Mock getRunBasicInfo response
+        if (url.includes('/runs/r1')) {
+          return of({
+            id: 'r1',
+            status: 'completed',
+            company: 'Google',
+            role_title: 'SDE',
+            created_at: '2023-01-01',
+          });
+        }
+        return of({});
+      });
+
+      service.getRunStatus('r1').subscribe((run) => {
+        expect(run.id).toBe('r1');
+        expect(run.company).toBe('Google');
+        expect(run.role).toBe('SDE');
+      });
+
+      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs/r1/steps');
+      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs/r1');
+    });
+
+    it('should get run steps', () => {
+      const mockResponse = { run_id: 'r1', status: 'running', steps: [] };
+      apiServiceSpy.get.mockReturnValue(of(mockResponse));
+
+      service.getRunSteps('r1').subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs/r1/steps');
+    });
+
+    it('should get run basic info', () => {
+      const mockResponse = {
+        id: 'r1',
+        status: 'completed',
+        company: 'Test Co',
+        role_title: 'Dev',
+        created_at: '2023',
+      };
+      apiServiceSpy.get.mockReturnValue(of(mockResponse));
+
+      service.getRunBasicInfo('r1').subscribe((run) => {
+        expect(run.company).toBe('Test Co');
+        expect(run.role).toBe('Dev'); // mapped from role_title
+      });
+
+      expect(apiServiceSpy.get).toHaveBeenCalledWith('/runs/r1');
     });
 
     it('should get artifacts', () => {
@@ -146,6 +198,17 @@ describe('RunsService', () => {
       apiServiceSpy.get.mockReturnValue(of({}));
       service.getArtifact('a1').subscribe();
       expect(apiServiceSpy.get).toHaveBeenCalledWith('/artifact/a1');
+    });
+
+    it('should get resume text', () => {
+      apiServiceSpy.get.mockReturnValue(of('LaTeX Content'));
+      service.getResumeText('r1').subscribe((text) => {
+        expect(text).toBe('LaTeX Content');
+      });
+      expect(apiServiceSpy.get).toHaveBeenCalledWith(
+        '/runs/r1/resume.tex?view=true',
+        expect.objectContaining({ responseType: 'text' }),
+      );
     });
 
     it('should download resume', () => {

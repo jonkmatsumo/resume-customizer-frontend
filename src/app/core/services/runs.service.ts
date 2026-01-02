@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { UserService } from './user.service';
-import { Run, Artifact, RunStepsResponse } from '../models';
+import { Run, Artifact, RunStepsResponse, RunDetailResponse } from '../models';
 import { Observable, tap, map, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -76,11 +76,22 @@ export class RunsService {
 
   /**
    * Get basic run information (company, role, dates)
-   * Uses legacy /status/{id} endpoint for temporary backward compatibility
-   * TODO: Replace with GET /v1/runs/{id} endpoint when available
+   * Uses GET /v1/runs/{id} endpoint
    */
   getRunBasicInfo(runId: string): Observable<Run> {
-    return this.api.get<Run>(`/status/${runId}`);
+    return this.api.get<RunDetailResponse>(`/runs/${runId}`).pipe(
+      map(
+        (response) =>
+          ({
+            id: response.id,
+            status: response.status,
+            company: response.company,
+            role: response.role_title || response.role,
+            created_at: response.created_at,
+            updated_at: response.completed_at || response.updated_at,
+          }) as Run,
+      ),
+    );
   }
 
   /**
@@ -122,6 +133,16 @@ export class RunsService {
    */
   getArtifact(artifactId: string): Observable<Artifact> {
     return this.api.get<Artifact>(`/artifact/${artifactId}`);
+  }
+
+  /**
+   * Get resume LaTeX content as text (for viewing in browser)
+   * Uses /v1/runs/{id}/resume.tex?view=true endpoint
+   */
+  getResumeText(runId: string): Observable<string> {
+    return this.api.get<string>(`/runs/${runId}/resume.tex?view=true`, {
+      responseType: 'text' as 'json', // Angular HTTP client type workaround for text response
+    });
   }
 
   /**

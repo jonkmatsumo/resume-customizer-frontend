@@ -90,10 +90,10 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
                         </span>
                       </div>
 
-                      @if (step.error_message) {
+                      @if (step.error) {
                         <div class="step-error">
                           <mat-icon>error</mat-icon>
-                          <span>{{ step.error_message }}</span>
+                          <span>{{ step.error }}</span>
                         </div>
                       }
 
@@ -131,9 +131,29 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
 
             <div class="actions">
               @if (runSteps()?.status === 'completed') {
-                <button mat-raised-button color="primary" (click)="downloadResume()">
-                  Download LaTeX
-                </button>
+                <div class="resume-section">
+                  <h3>Resume Content</h3>
+
+                  @if (showResumePreview() && resumeText()) {
+                    <!-- Inline expansion of resume preview -->
+                    <div class="resume-preview">
+                      <div class="resume-actions">
+                        <button mat-button (click)="showResumePreview.set(false)">
+                          Hide Preview
+                        </button>
+                        <button mat-button (click)="downloadResume()">Download LaTeX</button>
+                      </div>
+                      <pre class="latex-content">{{ resumeText() }}</pre>
+                    </div>
+                  } @else {
+                    <div class="resume-actions">
+                      <button mat-raised-button color="primary" (click)="loadResumeText()">
+                        View Resume Content
+                      </button>
+                      <button mat-button (click)="downloadResume()">Download LaTeX</button>
+                    </div>
+                  }
+                </div>
               }
               <button mat-button (click)="goBack()">Back to Dashboard</button>
             </div>
@@ -304,6 +324,36 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
         display: flex;
         justify-content: flex-end;
         gap: 1rem;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .resume-section {
+        width: 100%;
+        margin-bottom: 2rem;
+      }
+
+      .resume-preview {
+        margin-top: 1rem;
+      }
+
+      .resume-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        justify-content: flex-end;
+      }
+
+      .latex-content {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 0.875rem;
+        font-family: 'Courier New', monospace;
+        max-height: 600px;
+        overflow-y: auto;
+        white-space: pre-wrap;
       }
     `,
   ],
@@ -317,6 +367,8 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
   runBasicInfo = signal<Run | null>(null);
   error = signal<string | null>(null);
   artifacts = signal<Artifact[]>([]);
+  resumeText = signal<string | null>(null);
+  showResumePreview = signal(false);
 
   private pollingInterval?: ReturnType<typeof setInterval>;
   private subscriptions = new Subscription();
@@ -362,6 +414,23 @@ export class ResumeDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         // Non-fatal - basic info is optional, can proceed with partial data
+      },
+    });
+  }
+
+  loadResumeText(): void {
+    const runId = this.runSteps()?.run_id;
+    if (!runId) return;
+
+    this.runsState.getResumeText(runId).subscribe({
+      next: (text) => {
+        this.resumeText.set(text);
+        this.showResumePreview.set(true);
+      },
+      error: (err) => {
+        console.error('Error loading resume text:', err);
+        // Allow download to proceed even if preview fails
+        this.error.set('Failed to load resume preview, but download is still available.');
       },
     });
   }

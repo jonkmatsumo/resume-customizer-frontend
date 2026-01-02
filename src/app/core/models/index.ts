@@ -34,6 +34,7 @@ export type {
   RunStep,
   StepSummary,
   RunStepsResponse,
+  RunDetailResponse,
 } from './run.model';
 
 export { STEP_NAMES } from './run.model';

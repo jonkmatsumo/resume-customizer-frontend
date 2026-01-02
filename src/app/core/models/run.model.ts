@@ -27,7 +27,7 @@ export interface RunStep {
   completed_at?: string;
   duration_ms?: number;
   artifact_id?: string;
-  error_message?: string;
+  error?: string;
 }
 
 // Step summary counts
@@ -46,6 +46,20 @@ export interface RunStepsResponse {
   status: RunStatus;
   steps: RunStep[];
   summary: StepSummary;
+}
+
+// Response from GET /v1/runs/{id}
+export interface RunDetailResponse {
+  id: string;
+  user_id: string;
+  company: string;
+  role_title?: string;
+  role?: string; // Fallback
+  job_url?: string;
+  status: RunStatus;
+  created_at: string;
+  completed_at?: string;
+  updated_at?: string; // Fallback
 }
 
 // Step names as constants

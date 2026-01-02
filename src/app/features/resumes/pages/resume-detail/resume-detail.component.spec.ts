@@ -16,6 +16,7 @@ describe('ResumeDetailComponent', () => {
     getRunSteps: ReturnType<typeof vi.fn>;
     getRunBasicInfo: ReturnType<typeof vi.fn>;
     getArtifacts: ReturnType<typeof vi.fn>;
+    getResumeText: ReturnType<typeof vi.fn>;
     downloadResume: ReturnType<typeof vi.fn>;
   };
   let routerMock: {
@@ -29,6 +30,7 @@ describe('ResumeDetailComponent', () => {
       getRunSteps: vi.fn(),
       getRunBasicInfo: vi.fn(),
       getArtifacts: vi.fn(),
+      getResumeText: vi.fn(),
       downloadResume: vi.fn(),
     };
     routerMock = {
@@ -122,5 +124,29 @@ describe('ResumeDetailComponent', () => {
     expect(nativeElement.textContent).toContain('Test Corp');
     expect(nativeElement.textContent).toContain('Dev');
     expect(nativeElement.querySelectorAll('.step-item').length).toBe(2);
+  });
+
+  it('should load and display resume preview', () => {
+    const mockStepsResponse = {
+      run_id: '123',
+      status: 'completed',
+      steps: [],
+      summary: { total: 0, completed: 0, failed: 0, in_progress: 0, pending: 0 },
+    };
+    const mockResumeText = 'Mock Resume LaTeX Content';
+
+    runsServiceMock.getRunSteps.mockReturnValue(of(mockStepsResponse));
+    runsServiceMock.getRunBasicInfo.mockReturnValue(of({}));
+    runsServiceMock.getArtifacts.mockReturnValue(of([]));
+    runsServiceMock.getResumeText.mockReturnValue(of(mockResumeText));
+
+    fixture.detectChanges();
+
+    // Trigger loadResumeText
+    component.loadResumeText();
+
+    expect(runsServiceMock.getResumeText).toHaveBeenCalledWith('123');
+    expect(component.resumeText()).toBe(mockResumeText);
+    expect(component.showResumePreview()).toBe(true);
   });
 });
