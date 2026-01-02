@@ -31,6 +31,13 @@ describe('LandingComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should redirect to dashboard if authenticated on init', () => {
+    userServiceSpy.isAuthenticated.mockReturnValue(true);
+    // triggering ngOnInit manually or via detectChanges on a fresh component
+    component.ngOnInit();
+    expect(router.navigate).toHaveBeenCalledWith(['/resumes']);
+  });
+
   it('should show Get Started and Login buttons when not authenticated', () => {
     userServiceSpy.isAuthenticated.mockReturnValue(false);
     fixture.detectChanges();
@@ -38,18 +45,6 @@ describe('LandingComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Get Started');
     expect(element.textContent).toContain('I already have an account');
-    expect(element.textContent).not.toContain('Go to Profile');
-  });
-
-  it('should show Go to Dashboard button when authenticated', () => {
-    userServiceSpy.isAuthenticated.mockReturnValue(true);
-    fixture.detectChanges();
-
-    const element = fixture.nativeElement as HTMLElement;
-    expect(element.textContent).toContain('Go to Dashboard');
-    expect(element.textContent).not.toContain('Get Started');
-    // Note: 'I already have an account' text might be part of the other button which is hidden, let's check
-    expect(element.textContent).not.toContain('I already have an account');
   });
 
   it('should navigate to register', () => {
@@ -66,13 +61,5 @@ describe('LandingComponent', () => {
 
     component.navigateToLogin();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
-  });
-
-  it('should navigate to dashboard', () => {
-    userServiceSpy.isAuthenticated.mockReturnValue(true);
-    fixture.detectChanges();
-
-    component.navigateToDashboard();
-    expect(router.navigate).toHaveBeenCalledWith(['/resumes']);
   });
 });

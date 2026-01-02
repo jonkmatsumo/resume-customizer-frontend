@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,16 +15,10 @@ import { UserService } from '../../../../core/services/user.service';
           <h1>Resume Customizer</h1>
           <p>Create tailored resumes for every job application</p>
           <div class="actions">
-            @if (userState.isAuthenticated()) {
-              <button mat-raised-button color="primary" (click)="navigateToDashboard()">
-                Go to Dashboard
-              </button>
-            } @else {
-              <button mat-raised-button color="primary" (click)="navigateToRegister()">
-                Get Started
-              </button>
-              <button mat-button (click)="navigateToLogin()">I already have an account</button>
-            }
+            <button mat-raised-button color="primary" (click)="navigateToRegister()">
+              Get Started
+            </button>
+            <button mat-button (click)="navigateToLogin()">I already have an account</button>
           </div>
         </mat-card-content>
       </mat-card>
@@ -52,9 +46,15 @@ import { UserService } from '../../../../core/services/user.service';
     `,
   ],
 })
-export class LandingComponent {
+export class LandingComponent implements OnInit {
   private readonly router = inject(Router);
   readonly userState = inject(UserService);
+
+  ngOnInit(): void {
+    if (this.userState.isAuthenticated()) {
+      this.router.navigate(['/resumes']);
+    }
+  }
 
   navigateToRegister(): void {
     this.router.navigate(['/register']);
@@ -62,9 +62,5 @@ export class LandingComponent {
 
   navigateToLogin(): void {
     this.router.navigate(['/login']);
-  }
-
-  navigateToDashboard(): void {
-    this.router.navigate(['/resumes']);
   }
 }
