@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { ErrorService } from './error.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-// URL polyfill for test environment (Approach 7g: top-level require + beforeAll)
+// URL polyfill for test environment (Attempt 8: Node.js native url module)
 // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { URL, URLSearchParams } = require('whatwg-url');
+const { URL, URLSearchParams } = require('url');
 
 describe('ErrorService', () => {
   let service: ErrorService;
