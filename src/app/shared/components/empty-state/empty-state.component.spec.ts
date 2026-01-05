@@ -2,16 +2,22 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmptyStateComponent } from './empty-state.component';
 import { By } from '@angular/platform-browser';
 
+// URL polyfill for test environment (Approach 7g: top-level require + beforeAll)
+// See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { URL, URLSearchParams } = require('whatwg-url');
+
 describe('EmptyStateComponent', () => {
   let component: EmptyStateComponent;
   let fixture: ComponentFixture<EmptyStateComponent>;
 
-  beforeEach(async () => {
-    // URL polyfill for test environment using vi.stubGlobal
-    // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
-    const { URL, URLSearchParams } = await import('whatwg-url');
+  beforeAll(() => {
+    // Ensure polyfill is applied before any tests
     vi.stubGlobal('URL', URL);
     vi.stubGlobal('URLSearchParams', URLSearchParams);
+  });
+
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [EmptyStateComponent],
     }).compileComponents();

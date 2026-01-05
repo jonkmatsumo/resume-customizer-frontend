@@ -5,6 +5,11 @@ import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
+// URL polyfill for test environment (Approach 7g: top-level require + beforeAll)
+// See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { URL, URLSearchParams } = require('whatwg-url');
+
 describe('StartResumeComponent', () => {
   let component: StartResumeComponent;
   let fixture: ComponentFixture<StartResumeComponent>;
@@ -15,12 +20,13 @@ describe('StartResumeComponent', () => {
     navigate: ReturnType<typeof vi.fn>;
   };
 
-  beforeEach(async () => {
-    // URL polyfill for test environment using vi.stubGlobal
-    // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
-    const { URL, URLSearchParams } = await import('whatwg-url');
+  beforeAll(() => {
+    // Ensure polyfill is applied before any tests
     vi.stubGlobal('URL', URL);
     vi.stubGlobal('URLSearchParams', URLSearchParams);
+  });
+
+  beforeEach(async () => {
     userServiceSpy = {
       getStoredUserId: vi.fn(),
     };

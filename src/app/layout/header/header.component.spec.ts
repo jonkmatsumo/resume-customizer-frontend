@@ -4,6 +4,11 @@ import { UserService } from '../../core/services/user.service';
 import { Router, provideRouter } from '@angular/router';
 import { User } from '../../core/models';
 
+// URL polyfill for test environment (Approach 7g: top-level require + beforeAll)
+// See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { URL, URLSearchParams } = require('whatwg-url');
+
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
   let fixture: ComponentFixture<HeaderComponent>;
@@ -15,12 +20,13 @@ describe('HeaderComponent', () => {
   };
   let router: Router;
 
-  beforeEach(async () => {
-    // URL polyfill for test environment using vi.stubGlobal
-    // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
-    const { URL, URLSearchParams } = await import('whatwg-url');
+  beforeAll(() => {
+    // Ensure polyfill is applied before any tests
     vi.stubGlobal('URL', URL);
     vi.stubGlobal('URLSearchParams', URLSearchParams);
+  });
+
+  beforeEach(async () => {
     userServiceSpy = {
       currentUser: vi.fn(),
       isAuthenticated: vi.fn(),
