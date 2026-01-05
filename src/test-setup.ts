@@ -6,9 +6,11 @@ import { URL, URLSearchParams } from 'whatwg-url';
 // Check if we're in a Node.js-like environment and URL doesn't exist
 if (typeof global !== 'undefined') {
   if (!global.URL) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).URL = URL;
   }
   if (!global.URLSearchParams) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).URLSearchParams = URLSearchParams;
   }
 }
@@ -16,10 +18,11 @@ if (typeof global !== 'undefined') {
 // Also polyfill for window object if it exists (browser-like environment)
 if (typeof window !== 'undefined') {
   if (!window.URL) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).URL = URL;
   }
   if (!window.URLSearchParams) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).URLSearchParams = URLSearchParams;
   }
 }
-

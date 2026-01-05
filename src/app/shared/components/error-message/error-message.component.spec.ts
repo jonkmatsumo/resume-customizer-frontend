@@ -7,6 +7,22 @@ describe('ErrorMessageComponent', () => {
   let fixture: ComponentFixture<ErrorMessageComponent>;
 
   beforeEach(async () => {
+    // URL polyfill for test environment
+    // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
+    if (typeof global !== 'undefined' && !global.URL) {
+      const { URL, URLSearchParams } = await import('whatwg-url');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global as any).URL = URL;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global as any).URLSearchParams = URLSearchParams;
+    }
+    if (typeof window !== 'undefined' && !window.URL) {
+      const { URL, URLSearchParams } = await import('whatwg-url');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).URL = URL;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).URLSearchParams = URLSearchParams;
+    }
     await TestBed.configureTestingModule({
       imports: [ErrorMessageComponent],
     }).compileComponents();
