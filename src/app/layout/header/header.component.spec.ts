@@ -4,10 +4,24 @@ import { UserService } from '../../core/services/user.service';
 import { Router, provideRouter } from '@angular/router';
 import { User } from '../../core/models';
 
-// URL polyfill for test environment (Attempt 8: Node.js native url module)
+// URL polyfill for test environment (Attempt 9a: Direct global assignment at module load time)
 // See docs/CICD_FAILURES_RESOLUTION_PLAN.md for details
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { URL, URLSearchParams } = require('url');
+
+// Apply polyfill immediately at module load time (before any code executes)
+if (typeof global !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polyfill requires modifying global object
+  (global as any).URL = URL;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polyfill requires modifying global object
+  (global as any).URLSearchParams = URLSearchParams;
+}
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polyfill requires modifying global object
+  (window as any).URL = URL;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Polyfill requires modifying global object
+  (window as any).URLSearchParams = URLSearchParams;
+}
 
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
@@ -19,12 +33,6 @@ describe('HeaderComponent', () => {
     isLoggedIn: ReturnType<typeof vi.fn>;
   };
   let router: Router;
-
-  beforeAll(() => {
-    // Ensure polyfill is applied before any tests
-    vi.stubGlobal('URL', URL);
-    vi.stubGlobal('URLSearchParams', URLSearchParams);
-  });
 
   beforeEach(async () => {
     userServiceSpy = {
